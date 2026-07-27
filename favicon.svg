@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Hoijun Kim">
+  <title>Hoijun Kim</title>
+  <!-- A sheet of paper with a serif H: the personal mark. Deliberately the
+       inverse of the shape logo (dark tile, coloured bars) so the two read as
+       different hands. Geometry is mirrored in tools/make-icons.py. -->
+  <rect x="3" y="3" width="58" height="58" rx="13" fill="#F4F1EA" stroke="#1A1917" stroke-width="4.5"/>
+  <g fill="#1A1917">
+    <rect x="20.5" y="15" width="7" height="34"/>
+    <rect x="36.5" y="15" width="7" height="34"/>
+    <rect x="27.5" y="28" width="9" height="6"/>
+    <rect x="16.5" y="15" width="15" height="3.75"/>
+    <rect x="32.5" y="15" width="15" height="3.75"/>
+    <rect x="16.5" y="45.25" width="15" height="3.75"/>
+    <rect x="32.5" y="45.25" width="15" height="3.75"/>
+  </g>
+</svg>
