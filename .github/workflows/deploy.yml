@@ -37,7 +37,8 @@ jobs:
 
       - run: pip install "fonttools[woff]" pillow
 
-      # ~5 MB of Korean source that never ships - only the cut subsets do
+      # ~5 MB of TrueType that never ships: the Korean faces the subsetter cuts
+      # from, and the latin faces the card drawer sets type in
       - name: Cache the font sources
         uses: actions/cache@v4
         with:
@@ -45,7 +46,7 @@ jobs:
           key: fonts-${{ hashFiles('tools/make-fonts.py') }}
 
       - name: Fetch the font sources
-        run: python tools/make-fonts.py --korean-only
+        run: python tools/make-fonts.py --cache-only
 
       - run: npm run build
 

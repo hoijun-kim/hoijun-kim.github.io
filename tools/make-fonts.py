@@ -117,14 +117,18 @@ def cache_korean() -> None:
 
 
 def main() -> None:
-    # CI only needs the Korean sources: the latin subsets are committed, and
-    # refetching them would silently swap the shipped files for whatever
-    # Google is serving today.
-    if "--korean-only" in sys.argv:
+    # CI wants the caches but not the shipped files: the woff2 subsets are
+    # committed on purpose, and refetching them would silently swap them for
+    # whatever Google is serving today. The TrueType caches are still needed -
+    # post-build.py draws the cards in these faces.
+    if "--cache-only" in sys.argv:
+        for family, weight, stem in FACES:
+            cache_ttf(family, weight, stem)
+            print(f"{stem}.ttf{'':<9} cached")
         cache_korean()
         return
 
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     total = 0
     for family, weight, stem in FACES:
         url = latin_url(family, weight)

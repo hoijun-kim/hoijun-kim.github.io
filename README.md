@@ -52,8 +52,8 @@ kilobytes; an English one costs nothing.
 
 `python tools/make-fonts.py` refetches everything (needs `fonttools` and
 `brotli`) and caches the unsubset TrueType sources under `tools/.fonts/`,
-which the icon and card scripts need. `--korean-only` fetches just the Korean
-sources, which is all CI wants - the latin subsets are committed on purpose.
+which the icon and card scripts need. `--cache-only` fetches those sources and skips regenerating the shipped
+subsets, which is what CI wants - the subsets are committed on purpose.
 
 ## Marks and cards
 
