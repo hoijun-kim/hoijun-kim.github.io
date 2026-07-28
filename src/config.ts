@@ -10,7 +10,7 @@ export const analytics = {
    * Sign up at https://www.goatcounter.com/signup, then paste the code here.
    * Cookieless and ~3.5 KB, so there is nothing to ask consent for.
    */
-  goatcounter: "",
+  goatcounter: "hoijun-kim",
 };
 
 export const views = {
@@ -29,7 +29,7 @@ export const comments = {
    * repo - until it is installed the widget only renders its own error.
    * The ids came from the GitHub API and match the repo below.
    */
-  enabled: false,
+  enabled: true,
   repo: "hoijun-kim/hoijun-kim.github.io",
   repoId: "R_kgDOTk6TBg",
   /** Announcements: only maintainers can open threads, giscus does it for them */
