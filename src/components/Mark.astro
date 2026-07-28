@@ -1,0 +1,12 @@
+---
+// An H of three bars, the crossbar overshooting both stems. Geometry is shared
+// with favicon.svg and tools/make-icons.py - keep the three in step.
+export interface Props { size?: number }
+const { size = 25 } = Astro.props;
+---
+
+<svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" fill="currentColor" style="display:block">
+  <rect x="14" y="13" width="8.5" height="38" rx="2.5"></rect>
+  <rect x="41.5" y="13" width="8.5" height="38" rx="2.5"></rect>
+  <rect x="11.5" y="27.75" width="41" height="8.5" rx="2.5"></rect>
+</svg>

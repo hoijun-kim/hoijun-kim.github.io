@@ -1,0 +1,209 @@
+---
+import { work, workDocument, emphasise } from "../data/work";
+import { highlight } from "../lib/jsonHighlight";
+
+const doc = workDocument();
+const json = highlight(doc, { arrayKey: "work", colours: work.map((p) => p.colour) });
+const raw = JSON.stringify(doc, null, 2);
+---
+
+<section class="work wrap" id="work">
+  <div class="sec-head rise">
+    <span class="label">Work</span>
+    <span class="count">{work.length} projects</span>
+    <div class="tabs" role="tablist" aria-label="View of the same data">
+      <button class="tab" id="tab-board" type="button" role="tab" aria-selected="true" aria-controls="board">board</button>
+      <button class="tab" id="tab-raw" type="button" role="tab" aria-selected="false" aria-controls="raw" tabindex="-1">raw</button>
+    </div>
+  </div>
+
+  <div class="panel" id="board" role="tabpanel" aria-labelledby="tab-board" tabindex="0">
+    {work.map((p) => (
+      <article class="row rise" data-c style={`--c-light:${p.colour.light}; --c-dark:${p.colour.dark}`}>
+        <div>
+          <div class="row-head">
+            <h3 class="row-name"><a href={p.links.site}>{p.name}</a></h3>
+            <span class="ver">{p.version}</span>
+          </div>
+          <p class="row-desc" set:html={emphasise(p.summary, p.highlight)} />
+          <div class="row-links">
+            <a class="btn sm solid" href={p.links.download}>Download</a>
+            <a class="btn sm" href={p.links.site}>Site</a>
+            <a class="btn sm" href={p.links.source}>Source</a>
+          </div>
+        </div>
+        <dl class="spec">
+          <dt>stack</dt>
+          <dd class="words">{p.stack.map((s) => <span>{s}</span>)}</dd>
+          <dt>{p.runs.label}</dt>
+          <dd class="chips">{p.runs.items.map((s) => <span>{s}</span>)}</dd>
+          <dt>replaces</dt>
+          <dd class="chips gone">{p.replaces.map((s) => <span>{s}</span>)}</dd>
+          <dt>license</dt>
+          <dd>{p.license}</dd>
+        </dl>
+      </article>
+    ))}
+  </div>
+
+  <div class="panel" id="raw" role="tabpanel" aria-labelledby="tab-raw" tabindex="0" hidden>
+    <div class="raw-head">
+      <span>// the same objects the board is built from - also served at <a href="/work.json">/work.json</a></span>
+      <button class="btn sm" id="copy" type="button" data-json={raw}>Copy</button>
+    </div>
+    <pre class="json" tabindex="0" set:html={json} />
+  </div>
+</section>
+
+<style>
+  .work { margin-top: clamp(56px, 9vw, 92px); }
+  .sec-head {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line);
+  }
+  .count { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+  .tabs {
+    display: none; margin-left: auto; padding: 3px; gap: 2px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px;
+  }
+  :global(.js) .tabs { display: inline-flex; }
+  .tab {
+    font-family: var(--mono); font-size: 12px; font-weight: 400;
+    height: 26px; padding: 0 12px; border-radius: 6px;
+    border: 1px solid transparent; background: transparent; color: var(--muted);
+    cursor: pointer; transition: color .15s, background .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--ink-2); }
+  .tab[aria-selected="true"] {
+    background: var(--surface); color: var(--ink);
+    border-color: var(--line-strong); font-weight: 500;
+  }
+  .panel:focus-visible { outline-offset: 6px; }
+
+  .row {
+    position: relative; display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px; gap: 36px;
+    padding: 30px 0 32px 26px;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row::before {
+    content: ""; position: absolute; left: 0; top: 32px; bottom: 34px; width: 3px;
+    border-radius: 3px; background: var(--c); transition: top .2s, bottom .2s;
+  }
+  .row:hover::before { top: 24px; bottom: 26px; }
+  .row-head { display: flex; align-items: center; gap: 12px; }
+  .row-name { margin: 0; font-size: 1.55rem; font-weight: 600; letter-spacing: -0.016em; }
+  .row-name a:hover { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1.5px; }
+  .ver {
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px;
+    font-variant-numeric: tabular-nums;
+  }
+  .row-desc { margin: 12px 0 0; max-width: 56ch; color: var(--ink-2); }
+  .row-desc :global(b) { color: var(--ink); font-weight: 600; }
+  .row-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+
+  .spec {
+    display: grid; grid-template-columns: 74px minmax(0, 1fr);
+    gap: 10px 14px; margin: 5px 0 0;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+  }
+  .spec dt { color: var(--muted); }
+  .spec dd { margin: 0; color: var(--ink-2); }
+  .spec dd.words > span { white-space: nowrap; }
+  .spec dd.words > span + span::before { content: "\00B7"; color: var(--muted); margin: 0 0.45em; }
+  .spec dd.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chips > span {
+    border: 1px solid var(--line-strong); border-radius: 5px;
+    padding: 1px 6px; font-size: 11.5px; color: var(--ink-2);
+  }
+  /* "replaces" is the point of both apps, so it is drawn as struck out */
+  .chips.gone > span {
+    border-style: dashed; color: var(--muted);
+    text-decoration: line-through; text-decoration-thickness: 1px;
+  }
+
+  .raw-head {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin: 22px 0 12px; font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .raw-head a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .raw-head .btn { margin-left: auto; }
+  pre.json {
+    margin: 0; padding: 18px 20px 18px 0; overflow-x: auto;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+    font-family: var(--mono); font-size: 12.75px; line-height: 1.72;
+    counter-reset: ln;
+  }
+  /* Long values soft-wrap under their own indent rather than pushing a
+     horizontal scrollbar; the line number still counts logical lines. */
+  pre.json :global(.l) {
+    display: block; position: relative; padding-left: 62px;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  pre.json :global(.l)::before {
+    counter-increment: ln; content: counter(ln);
+    position: absolute; left: 0; width: 42px; text-align: right;
+    color: var(--muted); opacity: 0.75; font-variant-numeric: tabular-nums;
+  }
+  pre.json :global(.k) { color: var(--ink); font-weight: 500; }
+  pre.json :global(.p) { color: var(--muted); }
+  pre.json :global(.s) { color: var(--ink-2); }
+  pre.json :global(.n) { color: var(--ink); font-weight: 500; }
+  pre.json :global(.jobj .s) { color: var(--c-text); }
+
+  @media (max-width: 880px) {
+    .row { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  }
+  @media (max-width: 520px) {
+    .row { padding-left: 20px; }
+    pre.json :global(.l) { padding-left: 46px; }
+    pre.json :global(.l)::before { width: 28px; }
+  }
+</style>
+
+<script>
+  document.documentElement.classList.add("js");
+
+  const tabs = [document.getElementById("tab-board"), document.getElementById("tab-raw")] as HTMLButtonElement[];
+  const panels = [document.getElementById("board"), document.getElementById("raw")] as HTMLElement[];
+
+  function select(i: number, focus?: boolean) {
+    tabs.forEach((t, j) => {
+      t.setAttribute("aria-selected", String(i === j));
+      t.tabIndex = i === j ? 0 : -1;
+      panels[j].hidden = i !== j;
+    });
+    if (focus) tabs[i].focus();
+    // Keep the view in the URL so it can be linked, without the jump a real
+    // hash change would cause.
+    try {
+      history.replaceState(null, "", i === 1 ? "#raw" : location.pathname + location.search);
+    } catch (e) {}
+  }
+
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => select(i));
+    t.addEventListener("keydown", (e) => {
+      if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(e.key)) {
+        e.preventDefault();
+        select((i + 1) % 2, true);
+      }
+      if (e.key === "Home") { e.preventDefault(); select(0, true); }
+      if (e.key === "End") { e.preventDefault(); select(1, true); }
+    });
+  });
+
+  if (location.hash === "#raw") select(1);
+
+  const copy = document.getElementById("copy");
+  copy?.addEventListener("click", () => {
+    const text = copy.dataset.json ?? "";
+    const done = (okay: boolean) => {
+      copy.textContent = okay ? "Copied" : "Press Ctrl+C";
+      setTimeout(() => { copy.textContent = "Copy"; }, 1600);
+    };
+    navigator.clipboard?.writeText(text).then(() => done(true), () => done(false)) ?? done(false);
+  });
+</script>

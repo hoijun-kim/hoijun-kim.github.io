@@ -1,0 +1,89 @@
+---
+/**
+ * Twelve squares, scattered on the left of the frame and sorted into a grid on
+ * the right. The sort is driven by the figure's own position in the viewport,
+ * so it performs the sentence beside it instead of decorating it. Without
+ * scroll-driven animations - or with reduced motion asked for - the squares
+ * are simply drawn sorted, which is the state that carries the meaning.
+ *
+ * Positions are fixed rather than random so every build renders the same file.
+ */
+
+const W = 420;
+const H = 300;
+const S = 15; // square side
+
+// where they start: a heap on the left, deliberately uneven
+const scattered: [number, number, number][] = [
+  [18, 44, -13], [58, 22, 7], [96, 63, -5], [26, 96, 11],
+  [72, 108, -9], [16, 152, 4], [62, 176, -14], [104, 138, 8],
+  [30, 214, -6], [86, 236, 12], [128, 196, -3], [124, 96, 9],
+];
+
+// where they end: three tidy columns on the right, four rows deep
+const sorted: [number, number][] = [];
+for (let row = 0; row < 4; row++) {
+  for (let col = 0; col < 3; col++) {
+    sorted.push([236 + col * 56, 54 + row * 56]);
+  }
+}
+
+// three of them carry the site accent, so the sorted state reads as a result
+const marked = new Set([1, 5, 9]);
+---
+
+<figure class="fig" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="presentation">
+    <g class="grid">
+      {[0, 1, 2, 3].map((row) => (
+        <line x1="228" y1={54 + row * 56 + S / 2} x2="404" y2={54 + row * 56 + S / 2} style={`--row:${row}`} />
+      ))}
+    </g>
+    {scattered.map((from, i) => (
+      <rect
+        class:list={["sq", { mark: marked.has(i) }]}
+        width={S}
+        height={S}
+        rx="3.5"
+        style={`--sx:${from[0]}px; --sy:${from[1]}px; --rot:${from[2]}deg; --fx:${sorted[i]![0]}px; --fy:${sorted[i]![1]}px; --i:${i}`}
+      />
+    ))}
+  </svg>
+</figure>
+
+<style>
+  .fig { margin: 0; display: flex; justify-content: center; }
+  svg { width: 100%; height: auto; max-width: 420px; overflow: visible; }
+
+  .grid line {
+    stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5;
+  }
+  .sq {
+    fill: var(--line-strong);
+    transform: translate(var(--fx), var(--fy));
+  }
+  .sq.mark { fill: var(--accent); }
+
+  /* This one sits above the fold, so it plays once on load rather than on
+     scroll - a scroll-driven range would already be finished before anyone
+     saw it move. */
+  @media (prefers-reduced-motion: no-preference) {
+    .sq {
+      animation: sort 900ms cubic-bezier(.22, .68, .24, 1) both;
+      animation-delay: calc(240ms + var(--i) * 55ms);
+    }
+    .grid line {
+      animation: draw 600ms ease-out both;
+      animation-delay: calc(700ms + var(--row) * 55ms);
+    }
+  }
+
+  @keyframes sort {
+    from { transform: translate(var(--sx), var(--sy)) rotate(var(--rot)); fill: var(--line-strong); }
+    to { transform: translate(var(--fx), var(--fy)) rotate(0deg); }
+  }
+  @keyframes draw {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>

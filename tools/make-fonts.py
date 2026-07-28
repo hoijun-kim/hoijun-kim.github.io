@@ -33,6 +33,16 @@ FACES = [
     ("IBM Plex Mono", 500, "plex-mono-500"),
 ]
 
+# Korean is never shipped whole - 11,172 syllables is megabytes. The full faces
+# are cached here and tools/post-build.py cuts a per-page subset from them.
+# Google's css APIs only serve a latin fallback for the CJK families, so these
+# come from the font repository itself.
+KR_FACES = [
+    ("IBMPlexSansKR-Regular.ttf", "plex-sans-kr-400"),
+    ("IBMPlexSansKR-SemiBold.ttf", "plex-sans-kr-600"),
+]
+KR_BASE = "https://raw.githubusercontent.com/google/fonts/main/ofl/ibmplexsanskr/"
+
 # Everything the page can hold: ASCII, Latin-1 (c, middot, times), the
 # typographic dashes and quotes, bullet, ellipsis and the two arrows.
 UNICODES = ",".join(
@@ -94,7 +104,26 @@ def cache_ttf(family: str, weight: int, stem: str) -> None:
     (TTF_CACHE / f"{stem}.ttf").write_bytes(fetch(m.group(1), UA_TTF))
 
 
+def cache_korean() -> None:
+    """Keep the whole Korean faces locally; nothing here is ever shipped."""
+    TTF_CACHE.mkdir(exist_ok=True)
+    for remote, stem in KR_FACES:
+        dst = TTF_CACHE / f"{stem}.ttf"
+        if dst.exists():
+            print(f"{stem}.ttf{'':<9} cached")
+            continue
+        dst.write_bytes(fetch(KR_BASE + remote))
+        print(f"{stem}.ttf{'':<9} {dst.stat().st_size/1024/1024:.1f} MB (cache only)")
+
+
 def main() -> None:
+    # CI only needs the Korean sources: the latin subsets are committed, and
+    # refetching them would silently swap the shipped files for whatever
+    # Google is serving today.
+    if "--korean-only" in sys.argv:
+        cache_korean()
+        return
+
     OUT.mkdir(exist_ok=True)
     total = 0
     for family, weight, stem in FACES:
@@ -127,6 +156,7 @@ def main() -> None:
         print(f"{dst.name:<20} {len(raw)/1024:6.1f} KB -> {size/1024:5.1f} KB")
 
     print(f"{'total':<20} {'':>9} {total/1024:5.1f} KB")
+    cache_korean()
     print(f"ttf cache: {TTF_CACHE}")
 
 

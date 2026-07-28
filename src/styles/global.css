@@ -1,0 +1,168 @@
+/* Type is shipped with the page rather than borrowed from the OS, so the
+   identity is the same on Windows and macOS. IBM Plex, subset by
+   tools/make-fonts.py. Only 400/600 sans and 400/500 mono exist here, so
+   nothing else may be asked for or the browser fakes it. Korean pages get an
+   extra face injected by tools/post-build.py, cut to the characters that page
+   actually uses. */
+@font-face {
+  font-family: "Plex Sans"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("/fonts/plex-sans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plex Sans"; font-style: normal; font-weight: 600;
+  font-display: swap; src: url("/fonts/plex-sans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plex Mono"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("/fonts/plex-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plex Mono"; font-style: normal; font-weight: 500;
+  font-display: swap; src: url("/fonts/plex-mono-500.woff2") format("woff2");
+}
+
+/* Warm paper and ink. The projects own their colour - the orange and the blue
+   belong to shape and fleet and appear nowhere else. --accent is the site's
+   own, and only ever marks something you can act on: a link in prose, a focus
+   ring, the current item. It is a deep teal precisely because it collides with
+   neither product. */
+:root {
+  color-scheme: light dark;
+
+  --paper: #FAF9F6;
+  --surface: #FFFFFF;
+  --surface-2: #F3F1EB;
+  --ink: #1A1917;
+  --ink-2: #46433D;
+  --muted: #6E695F;
+  --line: #E6E2DA;
+  --line-strong: #C4BEB0;
+  --accent: #0E6E5E;
+  --accent-soft: #E3F0EC;
+
+  --sans: "Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --wrap: 1040px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #12110F;
+    --surface: #191815;
+    --surface-2: #211F1B;
+    --ink: #EFEDE7;
+    --ink-2: #C3BEB3;
+    --muted: #918B7E;
+    --line: #2A2823;
+    --line-strong: #474338;
+    --accent: #57CDB6;
+    --accent-soft: #14322C;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --paper: #FAF9F6; --surface: #FFFFFF; --surface-2: #F3F1EB;
+  --ink: #1A1917; --ink-2: #46433D; --muted: #6E695F;
+  --line: #E6E2DA; --line-strong: #C4BEB0;
+  --accent: #0E6E5E; --accent-soft: #E3F0EC;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #12110F; --surface: #191815; --surface-2: #211F1B;
+  --ink: #EFEDE7; --ink-2: #C3BEB3; --muted: #918B7E;
+  --line: #2A2823; --line-strong: #474338;
+  --accent: #57CDB6; --accent-soft: #14322C;
+}
+
+/* Anything carrying a project's colour sets --c-light/--c-dark inline and
+   reads --c. --c-text is the same hue pulled towards the ink so it survives as
+   body-size type on light paper; on dark the brand colour already clears 5:1. */
+[data-c] { --c: var(--c-light); --c-text: color-mix(in srgb, var(--c-light) 75%, var(--ink)); }
+@media (prefers-color-scheme: dark) { [data-c] { --c: var(--c-dark); --c-text: var(--c-dark); } }
+:root[data-theme="light"] [data-c] { --c: var(--c-light); --c-text: color-mix(in srgb, var(--c-light) 75%, var(--ink)); }
+:root[data-theme="dark"] [data-c] { --c: var(--c-dark); --c-text: var(--c-dark); }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column; min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+img, svg { max-width: 100%; }
+::selection { background: var(--ink); color: var(--paper); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+[hidden] { display: none !important; }
+main { flex: 1 1 auto; }
+
+/* A grain the width of a pixel or two, so flat fills stop looking like flat
+   fills. Fixed, behind everything, and never intercepts a click. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  opacity: 0.5; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) { body::before { mix-blend-mode: screen; opacity: 0.35; } }
+:root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.35; }
+:root[data-theme="light"] body::before { mix-blend-mode: multiply; opacity: 0.5; }
+
+.wrap { width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: 28px; }
+.label {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 15px; border-radius: 9px;
+  border: 1px solid var(--line-strong); color: var(--ink-2);
+  background: var(--surface);
+  /* a <button> does not inherit the page font from body - the UA pins it */
+  font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; transition: color .15s, border-color .15s, background .15s, transform .15s;
+}
+.btn:hover { color: var(--ink); border-color: var(--ink); }
+.btn:active { transform: translateY(1px); }
+.btn svg { width: 15px; height: 15px; }
+.btn.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.solid:hover { opacity: 0.88; }
+.btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; border-radius: 8px; }
+
+/* Reveal on scroll with no JavaScript at all: the animation is driven by the
+   element's own position in the viewport, so anything already on screen at
+   load is simply shown. Browsers without scroll-driven animations skip the
+   whole block and get static content. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 18%;
+    }
+  }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Cross-document transitions, also with no script. */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+footer { margin-top: clamp(72px, 13vw, 120px); border-top: 1px solid var(--line); padding: 22px 0 40px; }
+.foot-in {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+}
+.foot-in a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.foot-in .sep { opacity: 0.45; }
+.foot-in .right { margin-left: auto; display: flex; gap: 18px; }
+@media (max-width: 520px) {
+  .wrap { padding-inline: 20px; }
+  .foot-in .right { margin-left: 0; width: 100%; }
+}

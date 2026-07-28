@@ -1,0 +1,16 @@
+{
+  "name": "hoijun-kim.github.io",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && python tools/post-build.py",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.12",
+    "@astrojs/sitemap": "^3.6.0",
+    "astro": "^5.16.0"
+  }
+}

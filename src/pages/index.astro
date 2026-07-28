@@ -1,0 +1,166 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Board from "../components/Board.astro";
+import HeroFigure from "../components/HeroFigure.astro";
+import Icon from "../components/Icon.astro";
+import { profile, work } from "../data/work";
+
+const posts = (await getCollection("blog"))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+// One format for every row, whatever language the post is in - a list of
+// mixed date formats reads as a bug, and the language already has a badge.
+const fmt = (d: Date) =>
+  d.toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: profile.name,
+  jobTitle: profile.role,
+  url: "https://hoijun-kim.github.io/",
+  sameAs: [profile.links.github],
+  knowsAbout: ["Go", "Wails", "developer tools", "data engineering"],
+  makesOffer: work.map((p) => ({
+    "@type": "Offer",
+    itemOffered: {
+      "@type": "SoftwareApplication",
+      name: p.name,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Windows, macOS, Linux",
+      softwareVersion: p.version,
+      url: p.links.site,
+      description: p.summary,
+    },
+  })),
+};
+---
+
+<Base
+  title="Hoijun Kim - software engineer"
+  description="Hoijun Kim - software engineer. I turn work that usually needs a query language into something you can see and click. Creator of shape and fleet."
+  type="profile"
+  imageAlt="Hoijun Kim - software engineer. Work that usually needs a query language, turned into something you can see and click."
+  schema={schema}
+>
+  <section class="hero wrap">
+    <div class="hero-text">
+      <p class="label rise">{profile.name} &middot; {profile.role}</p>
+      <h1 class="rise">
+        Work that usually needs a <span class="q">query language</span>, turned into
+        something you can <span class="yes">see and click</span>.
+      </h1>
+      <p class="lede rise">
+        Two desktop tools so far. Each one takes something you would normally open a terminal
+        to inspect - a data file you have never seen, a directory full of git repos - and puts
+        it on screen, where you can point at it.
+      </p>
+      <div class="actions rise">
+        <a class="btn" href={profile.links.github} rel="me"><Icon name="github" size={15} /> GitHub</a>
+        <a class="btn" href={profile.links.email}><Icon name="mail" size={15} /> Email</a>
+      </div>
+    </div>
+    <div class="hero-fig"><HeroFigure /></div>
+  </section>
+
+  <Board />
+
+  {posts.length > 0 && (
+    <section class="writing wrap">
+      <div class="sec-head rise">
+        <span class="label">Writing</span>
+        <a class="more" href="/blog">all posts <Icon name="arrow" size={13} /></a>
+      </div>
+      <ul class="posts">
+        {posts.map((post) => (
+          <li class="rise">
+            <a href={`/blog/${post.id}`}>
+              <span class="post-date">{fmt(post.data.date)}</span>
+              <span class="post-title" lang={post.data.lang}>{post.data.title}</span>
+              {post.data.lang !== "en" && <span class="post-lang">{post.data.lang}</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="about wrap rise">
+    <div class="sec-head"><span class="label">Now</span></div>
+    <p class="about-text">
+      Building <b>fleet</b> towards a first stable release, and teaching <b>shape</b> to open
+      files bigger than memory. Both are Go with a web front end in a native window, both are
+      free for noncommercial use, and both exist because I got tired of typing the same query
+      to answer the same question.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-top: clamp(40px, 8vw, 88px);
+    display: grid; grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 48px; align-items: center;
+  }
+  h1 {
+    margin: 16px 0 0; max-width: 23ch;
+    font-size: clamp(2.05rem, 4.2vw, 3rem); font-weight: 600;
+    line-height: 1.16; letter-spacing: -0.021em; text-wrap: balance;
+  }
+  h1 .q {
+    font-family: var(--mono); font-weight: 400; font-size: 0.78em;
+    letter-spacing: -0.02em; line-height: 1;
+    color: var(--ink-2); background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.09em 0.24em; margin-right: -0.06em; white-space: nowrap;
+  }
+  h1 .yes { box-shadow: inset 0 -0.14em 0 var(--accent); }
+  .lede { margin: 24px 0 0; max-width: 54ch; font-size: 1.06rem; color: var(--ink-2); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+
+  .sec-head {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line);
+  }
+  .more {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+  }
+  .more:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+  .writing { margin-top: clamp(56px, 9vw, 88px); }
+  .posts { list-style: none; margin: 0; padding: 0; }
+  .posts li + li { border-top: 1px solid var(--line); }
+  .posts a {
+    display: flex; align-items: baseline; gap: 18px; padding: 15px 12px;
+    margin-inline: -12px; border-radius: 8px; transition: background .15s;
+  }
+  .posts a:hover { background: var(--surface-2); }
+  .post-date {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    min-width: 108px; font-variant-numeric: tabular-nums;
+  }
+  .post-title { font-weight: 600; }
+  .posts a:hover .post-title { text-decoration: underline; text-underline-offset: 4px; }
+  .post-lang {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px;
+  }
+
+  .about { margin-top: clamp(56px, 9vw, 88px); }
+  .about-text { margin: 18px 0 0; max-width: 62ch; color: var(--ink-2); }
+  .about-text b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 940px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+    .hero-fig { order: -1; }
+  }
+  @media (max-width: 520px) {
+    .posts a { flex-wrap: wrap; gap: 4px 12px; }
+    .post-date { min-width: 0; width: 100%; }
+  }
+</style>
