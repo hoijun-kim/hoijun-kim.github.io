@@ -85,6 +85,29 @@ nothing.
 The count stays hidden below 25 views. A number that small is worse than no
 number.
 
+## Getting found
+
+`robots.txt`, a sitemap and JSON-LD ship with the build, and every page names
+one canonical URL.
+
+Beyond that the engines split in two. Bing, Yandex, Naver, Seznam and Yep all
+take a push notification over IndexNow and share it with each other, so
+`tools/indexnow.py` posts the sitemap's URLs to them - automatically after any
+deploy that touched `src/content/`, or by hand:
+
+```
+python tools/indexnow.py                       # everything in the sitemap
+python tools/indexnow.py https://.../blog/x/   # or just one
+```
+
+Ownership is proved by `public/<key>.txt`, which contains the key and nothing
+else. Do not rename it without changing the key inside.
+
+Google takes none of this. It has no push protocol, so the site has to be
+registered by hand at Search Console with a Google account, and the sitemap
+submitted there once. Until that happens Google will only find the site by
+crawling a link to it from somewhere it already visits.
+
 ## Deploying
 
 `.github/workflows/deploy.yml` builds on every push to `main` and publishes

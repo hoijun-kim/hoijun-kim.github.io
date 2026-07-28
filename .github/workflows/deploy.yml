@@ -64,3 +64,27 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Only when the writing changed - the engines ask to be told about content,
+  # not about every stylesheet tweak. Google ignores IndexNow entirely; this
+  # reaches Bing, Yandex, Naver, Seznam and Yep, which share submissions.
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: changed
+        run: |
+          if git rev-parse HEAD~1 >/dev/null 2>&1 &&
+             git diff --name-only HEAD~1 HEAD | grep -q '^src/content/'; then
+            echo "posts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "posts=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # reads the sitemap that was just deployed, so there is nothing to build
+      - if: steps.changed.outputs.posts == 'true'
+        run: python tools/indexnow.py
