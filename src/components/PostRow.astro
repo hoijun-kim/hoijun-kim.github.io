@@ -1,0 +1,59 @@
+---
+import { fmtDate, KIND_LABEL, type Post } from "../lib/posts";
+
+export interface Props {
+  post: Post;
+  /** shown inside a series listing, where the part number replaces the kind */
+  showPart?: boolean;
+}
+const { post, showPart = false } = Astro.props;
+const d = post.data;
+---
+
+<li>
+  <a href={`/blog/${post.id}/`}>
+    <div class="top">
+      <h3 lang={d.lang}>{d.title}</h3>
+      {showPart ? (
+        <span class="badge part" lang="en">part {d.series!.part}</span>
+      ) : (
+        <span class:list={["badge", d.kind]} lang="en">{KIND_LABEL[d.kind]}</span>
+      )}
+      {d.draft && <span class="badge draft" lang="en">draft</span>}
+      {d.lang !== "en" && <span class="badge lang" lang="en">{d.lang}</span>}
+      <time datetime={d.date.toISOString()} lang="en">{fmtDate(d.date)}</time>
+    </div>
+    <p lang={d.lang}>{d.description}</p>
+  </a>
+</li>
+
+<style>
+  li { border-bottom: 1px solid var(--line); }
+  a {
+    display: block; padding: 22px 14px; margin-inline: -14px; border-radius: 10px;
+    transition: background .15s;
+  }
+  a:hover { background: var(--surface-2); }
+  .top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+  h3 { margin: 0; font-size: 1.28rem; font-weight: 600; letter-spacing: -0.014em; }
+  a:hover h3 { text-decoration: underline; text-underline-offset: 5px; }
+  p { margin: 9px 0 0; max-width: 62ch; color: var(--ink-2); font-size: 0.97rem; }
+
+  .badge {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em;
+    text-transform: uppercase; border: 1px solid var(--line-strong);
+    border-radius: 4px; padding: 1px 6px; color: var(--muted);
+  }
+  /* the kind is the one thing worth colouring: it says what you are about to read */
+  .badge.guide, .badge.part { color: var(--accent); border-color: var(--accent); }
+  .badge.draft { color: var(--paper); background: var(--muted); border-color: var(--muted); }
+  .badge.lang { color: var(--ink-2); }
+
+  time {
+    margin-left: auto; font-family: var(--mono); font-size: 12px;
+    color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  @media (max-width: 560px) {
+    time { margin-left: 0; }
+  }
+</style>

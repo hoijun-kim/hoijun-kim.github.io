@@ -1,0 +1,121 @@
+---
+import Base from "../../../layouts/Base.astro";
+import Icon from "../../../components/Icon.astro";
+import { posts, partsOf, fmtDate } from "../../../lib/posts";
+import { series as allSeries } from "../../../data/series";
+
+export async function getStaticPaths() {
+  const all = await posts();
+  return Object.keys(allSeries)
+    .map((id) => ({ id, parts: partsOf(all, id) }))
+    .filter((s) => s.parts.length)
+    .map((s) => ({ params: { id: s.id }, props: { id: s.id, parts: s.parts } }));
+}
+
+const { id, parts } = Astro.props;
+const meta = allSeries[id]!;
+const live = parts.filter((p) => !p.data.draft);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Collection",
+  name: meta.name,
+  description: meta.description,
+  inLanguage: meta.lang,
+  url: `https://hoijun-kim.github.io/blog/series/${id}/`,
+  hasPart: live.map((p) => ({
+    "@type": "BlogPosting",
+    headline: p.data.title,
+    position: p.data.series!.part,
+    datePublished: p.data.date.toISOString(),
+    url: `https://hoijun-kim.github.io/blog/${p.id}/`,
+  })),
+};
+---
+
+<Base
+  title={`${meta.name} - Hoijun Kim`}
+  description={meta.description}
+  lang={meta.lang}
+  schema={schema}
+>
+  <section class="head wrap">
+    <a class="back" href="/blog/" lang="en"><Icon name="arrow" size={13} /> writing</a>
+    <p class="label" lang="en">Series &middot; {live.length} part{live.length === 1 ? "" : "s"}</p>
+    <h1>{meta.name}</h1>
+    <p class="lede">{meta.description}</p>
+    <p class="who"><span class="who-label" lang="en">Assumed</span> {meta.audience}</p>
+  </section>
+
+  <ol class="parts wrap">
+    {parts.map((p) => (
+      <li class="rise">
+        <a href={`/blog/${p.id}/`}>
+          <span class="n" lang="en">{String(p.data.series!.part).padStart(2, "0")}</span>
+          <span class="body">
+            <span class="part-title">{p.data.title}{p.data.draft && <span class="d" lang="en">draft</span>}</span>
+            <span class="s">{p.data.description}</span>
+          </span>
+          <time datetime={p.data.date.toISOString()} lang="en">{fmtDate(p.data.date)}</time>
+        </a>
+      </li>
+    ))}
+  </ol>
+</Base>
+
+<style>
+  .head { padding-top: clamp(36px, 7vw, 76px); max-width: 760px; }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .back :global(svg) { transform: rotate(180deg); }
+  .back:hover { color: var(--accent); }
+  .label { margin: 18px 0 0; }
+  h1 {
+    margin: 12px 0 0; font-size: clamp(1.9rem, 4.2vw, 2.6rem); font-weight: 600;
+    line-height: 1.18; letter-spacing: -0.02em; text-wrap: balance;
+  }
+  .lede { margin: 18px 0 0; max-width: 60ch; color: var(--ink-2); font-size: 1.04rem; }
+  .who {
+    margin: 20px 0 0; max-width: 60ch; padding: 12px 16px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+    font-size: 0.95rem; color: var(--ink-2);
+  }
+  .who-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); margin-right: 8px;
+  }
+
+  .parts {
+    list-style: none; margin: clamp(34px, 6vw, 56px) auto 0; padding-inline: 28px;
+    max-width: 760px; border-top: 1px solid var(--line);
+  }
+  .parts li { border-bottom: 1px solid var(--line); }
+  .parts a {
+    display: flex; align-items: baseline; gap: 18px; padding: 20px 14px;
+    margin-inline: -14px; border-radius: 10px; transition: background .15s;
+  }
+  .parts a:hover { background: var(--surface-2); }
+  .n {
+    font-family: var(--mono); font-size: 13px; color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .part-title { font-weight: 600; }
+  .parts a:hover .part-title { text-decoration: underline; text-underline-offset: 4px; }
+  .s { color: var(--ink-2); font-size: 0.95rem; }
+  .d {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--paper); background: var(--muted);
+    border-radius: 4px; padding: 1px 6px; margin-left: 8px;
+  }
+  time {
+    margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  @media (max-width: 560px) {
+    .parts a { flex-wrap: wrap; gap: 8px 14px; }
+    time { margin-left: 0; }
+  }
+</style>

@@ -98,7 +98,7 @@ def subset_korean(by_weight: dict[str, set[str]], stem: str) -> dict[str, Path]:
 # lists below have to match the stylesheets, and tools/check-fonts.py proves
 # in a real browser that they do.
 BOLD_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "strong", "b", "th"}
-BOLD_CLASSES = {"row-name", "post-title", "btn"}
+BOLD_CLASSES = {"row-name", "post-title", "part-title", "run-name", "ttl", "btn"}
 NORMAL_CLASSES = {"q"}  # the mono chip inside the hero h1
 SKIP_TAGS = {"script", "style"}
 

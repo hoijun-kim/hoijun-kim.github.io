@@ -1,28 +1,32 @@
 ---
-import { getCollection, render, type CollectionEntry } from "astro:content";
+import { render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Icon from "../../components/Icon.astro";
 import ViewCount from "../../components/ViewCount.astro";
 import Comments from "../../components/Comments.astro";
 import { viewsOn } from "../../config";
+import { posts, partsOf, fmtLong, KIND_LABEL, type Post } from "../../lib/posts";
+import { seriesOf } from "../../data/series";
+import "../../styles/figure.css";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
-  return posts
-    .filter((p) => !p.data.draft)
-    .map((post) => ({ params: { slug: post.id }, props: { post } }));
+  const all = await posts();
+  return all.map((post) => ({ params: { slug: post.id }, props: { post, all } }));
 }
 
-type Props = { post: CollectionEntry<"blog"> };
-const { post } = Astro.props;
+type Props = { post: Post; all: Post[] };
+const { post, all } = Astro.props;
 const { Content, headings } = await render(post);
+
+const run = post.data.series ? seriesOf(post.data.series.id) : undefined;
+const parts = post.data.series ? partsOf(all, post.data.series.id) : [];
+const here = parts.findIndex((p) => p.id === post.id);
+const prev = here > 0 ? parts[here - 1] : undefined;
+const next = here >= 0 && here < parts.length - 1 ? parts[here + 1] : undefined;
 
 // The byline is site chrome, marked lang="en" like the rest of it, so the date
 // is set in English on a Korean post too - the alternative is a Korean date
 // string inside an element that claims to be English.
-const fmt = (d: Date) =>
-  d.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" });
-
 const schema = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -50,13 +54,21 @@ const schema = {
   <article class="post wrap">
     <header>
       <a class="back" href="/blog/" lang="en"><Icon name="arrow" size={13} /> writing</a>
+      {run && (
+        <a class="run" href={`/blog/series/${post.data.series!.id}/`}>
+          <span class="run-name">{run.name}</span>
+          <span class="run-part" lang="en">part {post.data.series!.part} of {parts.length}</span>
+        </a>
+      )}
       <h1>{post.data.title}</h1>
       <p class="meta" lang="en">
-        <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
+        <span class:list={["kind", post.data.kind]}>{KIND_LABEL[post.data.kind]}</span>
+        <span class="sep">/</span>
+        <time datetime={post.data.date.toISOString()}>{fmtLong(post.data.date)}</time>
         {post.data.updated && (
           <>
             <span class="sep">/</span>
-            <span>updated {fmt(post.data.updated)}</span>
+            <span>updated {fmtLong(post.data.updated)}</span>
           </>
         )}
         {headings.length > 2 && (
@@ -73,8 +85,27 @@ const schema = {
       <Content />
     </div>
 
+    {(prev || next) && (
+      <nav class="run-nav" aria-label="Series navigation">
+        {prev ? (
+          <a class="step" href={`/blog/${prev.id}/`}>
+            <span class="dir" lang="en">&larr; part {prev.data.series!.part}</span>
+            <span class="ttl">{prev.data.title}</span>
+          </a>
+        ) : <span />}
+        {next && (
+          <a class="step next" href={`/blog/${next.id}/`}>
+            <span class="dir" lang="en">part {next.data.series!.part} &rarr;</span>
+            <span class="ttl">{next.data.title}</span>
+          </a>
+        )}
+      </nav>
+    )}
+
     <footer class="post-foot" lang="en">
-      <a class="btn sm" href="/blog/">More posts</a>
+      <a class="btn sm" href={run ? `/blog/series/${post.data.series!.id}/` : "/blog/"}>
+        {run ? "All parts" : "More posts"}
+      </a>
       <a class="btn sm" href="/rss.xml">RSS</a>
     </footer>
 
@@ -119,6 +150,36 @@ const schema = {
     font-family: var(--mono); font-size: 12px; color: var(--muted);
   }
   .meta .sep { opacity: 0.5; }
+  .kind {
+    font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--line-strong); border-radius: 4px; padding: 1px 6px;
+  }
+  .kind.guide { color: var(--accent); border-color: var(--accent); }
+
+  .run {
+    display: inline-flex; align-items: baseline; gap: 10px; margin-top: 16px;
+    padding: 4px 10px 4px 0;
+  }
+  .run-name { font-weight: 600; font-size: 0.95rem; color: var(--accent); }
+  .run:hover .run-name { text-decoration: underline; text-underline-offset: 4px; }
+  .run-part { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+  .run-nav {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 56px;
+  }
+  .step {
+    display: flex; flex-direction: column; gap: 6px; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 11px; background: var(--surface);
+    transition: border-color .15s, background .15s;
+  }
+  .step:hover { border-color: var(--accent); background: var(--surface-2); }
+  .step.next { text-align: right; }
+  .dir { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+  .ttl { font-weight: 600; font-size: 0.98rem; }
+  @media (max-width: 560px) {
+    .run-nav { grid-template-columns: 1fr; }
+    .step.next { text-align: left; }
+  }
   .meta :global(.views) { font-variant-numeric: tabular-nums; }
   .meta :global(.views .sep) { opacity: 0.5; }
 

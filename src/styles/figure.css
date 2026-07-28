@@ -1,0 +1,67 @@
+/* Figures inside posts. The SVGs are hand-written or generated from the same
+   numbers the post prints, and they carry no colours of their own - everything
+   resolves through the page's tokens, so both themes work and nothing has to
+   be redrawn. */
+
+.prose figure.fig {
+  margin: 2em 0;
+  padding: 20px 20px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.prose figure.fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* contour lines legitimately run past the frame; they get clipped, not
+     painted over the paragraph above */
+  overflow: hidden;
+}
+.prose figure.fig figcaption {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* shared vocabulary */
+.fig text { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+.fig .cap { fill: var(--muted); font-size: 10.5px; letter-spacing: 0.04em; }
+.fig .lbl { fill: var(--muted); font-size: 10.5px; }
+.fig .lbl.ok { fill: var(--accent); }
+.fig .lbl.bad { fill: var(--ink-2); }
+
+/* part 1 - a buffer and two ways of reading it */
+.fig .cells rect { fill: var(--surface-2); stroke: var(--line-strong); }
+.fig .tick line { stroke: var(--line-strong); stroke-width: 1; }
+.fig .val text { fill: var(--ink); font-size: 11px; text-anchor: middle; }
+.fig .hop path { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+.fig .hop circle { fill: var(--line-strong); }
+.fig .hop.a path, .fig .hop.a circle { stroke: var(--accent); fill: none; }
+.fig .hop.a circle { fill: var(--accent); }
+.fig .hop.c path { stroke: var(--ink-2); stroke-dasharray: 4 3; }
+.fig .hop.c circle { fill: var(--ink-2); }
+.fig .row-lbl text { fill: var(--muted); font-size: 10px; text-anchor: middle; }
+
+/* part 2 - loss against steps, one line per learning rate */
+.fig .axis line { stroke: var(--line); stroke-width: 1; }
+.fig .tick-lbl { fill: var(--muted); font-size: 9.5px; }
+.fig .curve { stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.fig .curve.ok { stroke: var(--accent); }
+.fig .curve.ok2 { stroke: var(--accent); stroke-dasharray: 5 3; opacity: 0.75; }
+.fig .curve.bad { stroke: var(--ink-2); stroke-dasharray: 5 3; }
+.fig .curve.bad2 { stroke: var(--ink-2); }
+
+/* part 3 - a computation graph read twice */
+.fig .edge path { stroke: var(--line-strong); stroke-width: 1.4; fill: none; }
+.fig .node rect { fill: var(--surface-2); stroke: var(--line-strong); }
+.fig .node rect.op { fill: var(--surface); stroke: var(--ink-2); }
+.fig .node rect.out { fill: var(--surface); stroke: var(--accent); }
+.fig .txt text { fill: var(--ink); text-anchor: middle; font-size: 11.5px; }
+.fig .fwd text { fill: var(--ink-2); text-anchor: middle; font-size: 10.5px; }
+.fig .bwd text { fill: var(--accent); text-anchor: middle; font-size: 10.5px; }
+.fig .lane { fill: var(--muted); font-size: 10px; letter-spacing: 0.06em; }

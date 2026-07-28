@@ -1,64 +1,79 @@
 ---
-import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Icon from "../../components/Icon.astro";
+import PostRow from "../../components/PostRow.astro";
+import { posts, seriesIndex } from "../../lib/posts";
 
-const posts = (await getCollection("blog"))
-  .filter((p) => !p.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-// One format for every row - the language badge already carries that signal.
-const fmt = (d: Date) =>
-  d.toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
+const all = await posts();
+const runs = seriesIndex(all);
+const inSeries = new Set(all.filter((p) => p.data.series).map((p) => p.id));
+const singles = all.filter((p) => !inSeries.has(p.id));
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "Blog",
   name: "Hoijun Kim - writing",
-  url: "https://hoijun-kim.github.io/blog",
+  url: "https://hoijun-kim.github.io/blog/",
   inLanguage: ["en", "ko"],
-  blogPost: posts.map((p) => ({
+  blogPost: all.map((p) => ({
     "@type": "BlogPosting",
     headline: p.data.title,
     datePublished: p.data.date.toISOString(),
-    url: `https://hoijun-kim.github.io/blog/${p.id}`,
+    url: `https://hoijun-kim.github.io/blog/${p.id}/`,
   })),
 };
 ---
 
 <Base
   title="Writing - Hoijun Kim"
-  description="Notes on building desktop developer tools in Go - what shape and fleet are made of, and what broke along the way."
+  description="Notes on building desktop developer tools in Go, and a series that draws the parts of deep learning you cannot see."
   schema={schema}
 >
   <section class="head wrap">
     <p class="label rise">Writing</p>
-    <h1 class="rise">Notes from building the tools.</h1>
+    <h1 class="rise">Notes, and things drawn out.</h1>
     <p class="lede rise">
-      Mostly what went wrong and what it cost to fix. Some posts are in English, some in
-      Korean - the language is marked on each.
+      Logs from building the tools - mostly what went wrong and what it cost - and guides that
+      take something invisible and put it on the page. Some posts are in English, some in
+      Korean; the language is marked on each.
       <a class="feed" href="/rss.xml"><Icon name="rss" size={13} /> RSS</a>
     </p>
   </section>
 
+  {runs.length > 0 && (
+    <section class="series wrap">
+      <div class="sec-head rise"><h2 class="label">Series</h2></div>
+      {runs.map((run) => (
+        <article class="run rise">
+          <a class="run-head" href={`/blog/series/${run.id}/`}>
+            <h3 lang={run.meta.lang}>{run.meta.name}</h3>
+            <span class="run-count" lang="en">
+              {run.parts.length} part{run.parts.length === 1 ? "" : "s"}
+            </span>
+          </a>
+          <p class="run-desc" lang={run.meta.lang}>{run.meta.description}</p>
+          <ol class="run-parts">
+            {run.parts.map((part) => (
+              <li>
+                <a href={`/blog/${part.id}/`}>
+                  <span class="n" lang="en">{String(part.data.series!.part).padStart(2, "0")}</span>
+                  <span class="part-link" lang={part.data.lang}>{part.data.title}</span>
+                  {part.data.draft && <span class="d" lang="en">draft</span>}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </article>
+      ))}
+    </section>
+  )}
+
   <section class="list wrap">
-    {posts.length === 0 ? (
-      <p class="empty">Nothing published yet.</p>
+    {runs.length > 0 && <div class="sec-head rise"><h2 class="label">Everything else</h2></div>}
+    {singles.length === 0 ? (
+      <p class="empty">Nothing else yet.</p>
     ) : (
-      <ul>
-        {posts.map((post) => (
-          <li class="rise">
-            <a href={`/blog/${post.id}/`}>
-              <div class="row-top">
-                <h2 lang={post.data.lang}>{post.data.title}</h2>
-                {post.data.lang !== "en" && <span class="lang">{post.data.lang}</span>}
-                <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
-              </div>
-              <p lang={post.data.lang}>{post.data.description}</p>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <ul>{singles.map((post) => <PostRow post={post} />)}</ul>
     )}
   </section>
 </Base>
@@ -66,43 +81,54 @@ const schema = {
 <style>
   .head { padding-top: clamp(40px, 8vw, 84px); }
   h1 {
-    margin: 14px 0 0; max-width: 18ch;
+    margin: 14px 0 0; max-width: 20ch;
     font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 600;
     line-height: 1.16; letter-spacing: -0.02em;
   }
-  .lede { margin: 20px 0 0; max-width: 56ch; color: var(--ink-2); }
+  .lede { margin: 20px 0 0; max-width: 60ch; color: var(--ink-2); }
   .feed {
     display: inline-flex; align-items: center; gap: 5px; margin-left: 8px;
-    font-family: var(--mono); font-size: 12px; color: var(--accent);
-    vertical-align: 1px;
+    font-family: var(--mono); font-size: 12px; color: var(--accent); vertical-align: 1px;
   }
   .feed:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-  .list { margin-top: clamp(40px, 7vw, 64px); }
-  ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  li { border-bottom: 1px solid var(--line); }
-  li a {
-    display: block; padding: 24px 14px; margin-inline: -14px; border-radius: 10px;
-    transition: background .15s;
+  .sec-head {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line);
   }
-  li a:hover { background: var(--surface-2); }
-  .row-top { display: flex; align-items: baseline; gap: 12px; }
-  h2 { margin: 0; font-size: 1.32rem; font-weight: 600; letter-spacing: -0.014em; }
-  li a:hover h2 { text-decoration: underline; text-underline-offset: 5px; }
-  .lang {
-    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--accent);
-    border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px;
-  }
-  time {
-    margin-left: auto; font-family: var(--mono); font-size: 12px;
-    color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  li p { margin: 9px 0 0; max-width: 62ch; color: var(--ink-2); font-size: 0.98rem; }
-  .empty { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  h2.label { margin: 0; }
 
-  @media (max-width: 560px) {
-    .row-top { flex-wrap: wrap; gap: 6px 10px; }
-    time { margin-left: 0; width: 100%; }
+  .series { margin-top: clamp(40px, 7vw, 64px); }
+  .run { padding: 26px 0 4px; }
+  .run-head { display: flex; align-items: baseline; gap: 12px; }
+  .run-head h3 { margin: 0; font-size: 1.32rem; font-weight: 600; letter-spacing: -0.014em; }
+  .run-head:hover h3 { text-decoration: underline; text-underline-offset: 5px; }
+  .run-count {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 4px; padding: 1px 6px;
   }
+  .run-desc { margin: 10px 0 0; max-width: 62ch; color: var(--ink-2); font-size: 0.97rem; }
+
+  .run-parts { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .run-parts li { border-bottom: 1px solid var(--line); }
+  .run-parts a {
+    display: flex; align-items: baseline; gap: 14px; padding: 11px 12px;
+    margin-inline: -12px; border-radius: 8px; transition: background .15s;
+  }
+  .run-parts a:hover { background: var(--surface-2); }
+  .run-parts .n {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .run-parts a:hover .part-link { text-decoration: underline; text-underline-offset: 4px; }
+  .run-parts .d {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--paper); background: var(--muted);
+    border-radius: 4px; padding: 1px 6px;
+  }
+
+  .list { margin-top: clamp(44px, 8vw, 72px); }
+  ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .empty { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 </style>

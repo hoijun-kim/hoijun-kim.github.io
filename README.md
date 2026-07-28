@@ -25,9 +25,33 @@ draft: false      # true keeps it out of the build entirely
 ---
 ```
 
-The filename is the URL. A post needs nothing else: the list page, the RSS
-feed, the sitemap, the JSON-LD and the Open Graph card are all derived from
-that frontmatter at build time.
+`kind` is `log` (building the tools), `guide` (explaining something, usually
+with a figure) or `note` (short, one idea). A post can also join an ordered
+run:
+
+```yaml
+kind: guide
+series:
+  id: seeing-deep-learning   # keys src/data/series.ts
+  part: 2
+```
+
+A series gets its own index at `/blog/series/<id>/`, and each part gets a
+header saying where it sits plus links to the parts either side. The filename
+is the URL. Nothing else is needed: the list page, the RSS feed, the sitemap,
+the JSON-LD and the Open Graph card all derive from the frontmatter at build
+time.
+
+Drafts stay out of the build but `astro dev` shows them. To see one with its
+real Korean type - the subsetter runs over `dist/`, not the dev server - build
+with `DRAFTS=1 npm run build`.
+
+Figures are inline SVG in the Markdown, styled by `src/styles/figure.css` so
+they use the page's own colours and work in both themes. Two rules: no blank
+lines inside the `<figure>` block, or Markdown ends the HTML block and parses
+the rest of the SVG as text; and any class carrying weight 600 must be listed
+in `BOLD_CLASSES` in `tools/post-build.py`, or its Korean lands in the wrong
+subset.
 
 ## One source of data
 
