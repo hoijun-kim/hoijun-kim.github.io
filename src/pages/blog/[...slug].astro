@@ -30,7 +30,7 @@ const schema = {
   ...(post.data.updated && { dateModified: post.data.updated.toISOString() }),
   inLanguage: post.data.lang,
   author: { "@type": "Person", name: "Hoijun Kim", url: "https://hoijun-kim.github.io/" },
-  mainEntityOfPage: `https://hoijun-kim.github.io/blog/${post.id}`,
+  mainEntityOfPage: `https://hoijun-kim.github.io/blog/${post.id}/`,
   image: `https://hoijun-kim.github.io/og/${post.id}.png`,
 };
 ---
@@ -47,7 +47,7 @@ const schema = {
 >
   <article class="post wrap">
     <header>
-      <a class="back" href="/blog"><Icon name="arrow" size={13} /> writing</a>
+      <a class="back" href="/blog/"><Icon name="arrow" size={13} /> writing</a>
       <h1>{post.data.title}</h1>
       <p class="meta">
         <time datetime={post.data.date.toISOString()}>{fmt(post.data.date, post.data.lang)}</time>
@@ -71,7 +71,7 @@ const schema = {
     </div>
 
     <footer class="post-foot">
-      <a class="btn sm" href="/blog">More posts</a>
+      <a class="btn sm" href="/blog/">More posts</a>
       <a class="btn sm" href="/rss.xml">RSS</a>
     </footer>
   </article>

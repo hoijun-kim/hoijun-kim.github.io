@@ -48,7 +48,7 @@ const schema = {
       <ul>
         {posts.map((post) => (
           <li class="rise">
-            <a href={`/blog/${post.id}`}>
+            <a href={`/blog/${post.id}/`}>
               <div class="row-top">
                 <h2 lang={post.data.lang}>{post.data.title}</h2>
                 {post.data.lang !== "en" && <span class="lang">{post.data.lang}</span>}

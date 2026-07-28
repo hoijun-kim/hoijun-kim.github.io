@@ -28,7 +28,10 @@ const {
   publishedAt,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site).href.replace(/(.)\/$/, "$1");
+// Pages serves directories, so /blog answers with a 301 to /blog/. Keep the
+// slash: the canonical, the sitemap and the links then all name the URL that
+// actually returns 200.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const imageURL = new URL(image, Astro.site).href;
 ---
 

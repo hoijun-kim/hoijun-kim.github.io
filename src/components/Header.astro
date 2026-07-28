@@ -10,7 +10,7 @@ const onBlog = path.startsWith("/blog");
     <a class="mark" href="/" aria-label="Hoijun Kim - home"><Mark size={25} /></a>
     <nav class="nav" aria-label="Sections">
       <a href="/" class:list={[{ here: !onBlog }]} aria-current={!onBlog ? "page" : undefined}>work</a>
-      <a href="/blog" class:list={[{ here: onBlog }]} aria-current={onBlog ? "page" : undefined}>writing</a>
+      <a href="/blog/" class:list={[{ here: onBlog }]} aria-current={onBlog ? "page" : undefined}>writing</a>
     </nav>
     <div class="bar-links">
       <a class="icon-btn" href="https://github.com/hoijun-kim" aria-label="GitHub" rel="me"><Icon name="github" /></a>

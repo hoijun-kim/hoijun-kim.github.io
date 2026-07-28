@@ -11,12 +11,13 @@ export async function GET(context) {
     description:
       "Notes on building desktop developer tools in Go - what shape and fleet are made of, and what broke along the way.",
     site: context.site,
-    trailingSlash: false,
+    // keep it: /blog/x is a 301 to /blog/x/ on Pages
+    trailingSlash: true,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.date,
-      link: `/blog/${post.id}`,
+      link: `/blog/${post.id}/`,
       customData: `<language>${post.data.lang}</language>`,
     })),
   });
