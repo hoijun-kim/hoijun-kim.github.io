@@ -78,7 +78,8 @@ document.getElementById("f").addEventListener("load", function () {
       wanted[key] = (wanted[key] || "") + text;
     }
     for (const k in wanted) wanted[k] = [...new Set(wanted[k])].join("");
-    document.getElementById("out").textContent = JSON.stringify(wanted);
+    document.getElementById("out").textContent =
+      JSON.stringify({ measured: d.location.pathname, fonts: wanted });
   } catch (e) {
     document.getElementById("out").textContent = "HARNESS ERROR " + e.message;
   }
@@ -122,12 +123,12 @@ def compare(page: Path, resolved: dict[str, str]) -> list[str]:
     return gaps
 
 
-def run(browser: str, profile: str, port: int) -> str:
+def run(browser: str, profile: str, port: int, name: str) -> str:
     out = subprocess.run(
         [
             browser, "--headless=new", "--disable-gpu", "--no-first-run",
             f"--user-data-dir={profile}", "--virtual-time-budget=20000",
-            "--dump-dom", "--disable-http-cache", f"http://127.0.0.1:{port}/__check.html",
+            "--dump-dom", f"http://127.0.0.1:{port}/{name}",
         ],
         capture_output=True,
         text=True,
@@ -167,7 +168,7 @@ def main() -> None:
     pages = [
         p
         for p in sorted(DIST.rglob("*.html"))
-        if p.name != "__check.html" and HANGUL.search(p.read_text(encoding="utf-8"))
+        if not p.name.startswith("__check") and HANGUL.search(p.read_text(encoding="utf-8"))
     ]
     if not pages:
         print("no page contains Hangul - nothing to check")
@@ -179,31 +180,43 @@ def main() -> None:
     failed = False
 
     try:
-        for page in pages:
+        for n, page in enumerate(pages):
             url = "/" + page.relative_to(DIST).as_posix().replace("index.html", "")
-            harness = DIST / "__check.html"
-            harness.write_text(HARNESS.replace("__PAGE__", url), encoding="utf-8")
-            raw = run(browser, profile, port)
+            # A fresh name per page: one shared harness URL gets revalidated to
+            # a 304 and the browser re-measures the page it saw last, which
+            # looks exactly like a font gap on whichever page follows.
+            name = f"__check-{n}.html"
+            (DIST / name).write_text(HARNESS.replace("__PAGE__", url), encoding="utf-8")
+            raw = run(browser, profile, port, name)
             if raw.startswith("UNSTYLED"):
                 # the page was measured before its stylesheet applied; that is a
                 # harness problem, not a font problem, so try again
                 attempts = 2
                 while attempts and raw.startswith("UNSTYLED"):
                     attempts -= 1
-                    raw = run(browser, profile, port)
+                    raw = run(browser, profile, port, name)
             if not raw or raw.startswith(("HARNESS ERROR", "UNSTYLED")) or raw == "PENDING":
                 failed = True
                 print(f"FAIL {url:<34} {raw or 'NO RESULT'}")
                 continue
 
-            gaps = compare(page, json.loads(raw))
+            payload = json.loads(raw)
+            # Proof that the browser measured the page we asked about: a cached
+            # harness would silently re-measure the previous one.
+            if payload.get("measured") != url:
+                failed = True
+                print(f"FAIL {url:<34} measured {payload.get('measured')} instead")
+                continue
+
+            gaps = compare(page, payload["fonts"])
             failed = failed or bool(gaps)
             print(
                 f"{'FAIL' if gaps else 'ok  '} {url:<34} "
                 + ("; ".join(gaps) if gaps else "every character served by the face it asks for")
             )
     finally:
-        (DIST / "__check.html").unlink(missing_ok=True)
+        for leftover in DIST.glob("__check-*.html"):
+            leftover.unlink(missing_ok=True)
         server.shutdown()
         shutil.rmtree(profile, ignore_errors=True)
 
