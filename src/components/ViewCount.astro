@@ -1,0 +1,18 @@
+---
+/**
+ * The number itself. It sits inside the byline paragraph, so this component is
+ * markup only - the behaviour lives in the page, where a <script> is allowed to
+ * be. Hidden until a count arrives: a blocked request, an offline reader or a
+ * counter that is not public yet all leave the byline exactly as it was, rather
+ * than showing a zero or a spinner.
+ */
+import { analytics, viewsOn } from "../config";
+
+const { path } = Astro.props as { path: string };
+---
+
+{viewsOn && (
+  <span class="views" hidden data-path={path} data-code={analytics.goatcounter}>
+    <span class="sep">/</span> <span class="n"></span> views
+  </span>
+)}

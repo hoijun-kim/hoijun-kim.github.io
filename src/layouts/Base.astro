@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import { analytics, analyticsOn } from "../config";
 
 export interface Props {
   title: string;
@@ -89,6 +90,17 @@ const imageURL = new URL(image, Astro.site).href;
       <slot />
     </main>
     <Footer />
+
+    {/* Cookieless and ~3.5 KB, so there is nothing to ask consent for. Loaded
+        last and async: nothing on the page waits for it. */}
+    {analyticsOn && (
+      <script
+        is:inline
+        async
+        data-goatcounter={`https://${analytics.goatcounter}.goatcounter.com/count`}
+        src="https://gc.zgo.at/count.js"
+      />
+    )}
 
     <script>
       // The two theme-color metas are keyed to the OS scheme, which a manual

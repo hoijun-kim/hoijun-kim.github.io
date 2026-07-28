@@ -64,6 +64,27 @@ after changing the mark, and keep the geometry in the SVG and the script in
 step by hand. Per-post cards are drawn during the build instead, by
 `tools/post-build.py`.
 
+## Analytics, view counts and comments
+
+All three live in `src/config.ts`, and all three are off. Off means nothing
+renders - no markup, no stylesheet, no request - so the pages stay exactly as
+fast as they are now until each one is switched on deliberately.
+
+| what | switch | needs first |
+|---|---|---|
+| visitor stats | `analytics.goatcounter` | an account at goatcounter.com; paste the subdomain code |
+| per-post view count | `views.show` (already true) | analytics on, plus "allow public access to counts" in GoatCounter |
+| comments | `comments.enabled` | install github.com/apps/giscus on this repo |
+
+GoatCounter sets no cookies and collects no personal data, so there is nothing
+to put a consent banner on. Comments are GitHub Discussions in this repo, in
+the Announcements category - the ids are already filled in. The iframe is not
+requested until the reader scrolls near it, so a thread nobody opens costs
+nothing.
+
+The count stays hidden below 25 views. A number that small is worse than no
+number.
+
 ## Deploying
 
 `.github/workflows/deploy.yml` builds on every push to `main` and publishes
