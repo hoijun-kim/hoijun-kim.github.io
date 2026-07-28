@@ -38,7 +38,7 @@ project means editing that one array.
 
 ## Type
 
-The page ships IBM Plex (OFL, see `fonts/OFL.txt`) rather than falling back to
+The page ships IBM Plex (OFL, see `public/fonts/OFL.txt`) rather than falling back to
 system fonts, so it renders the same on Windows and macOS. `public/fonts/*.woff2`
 are committed and total about 57 KB. Only weights 400/600 sans and 400/500 mono
 are shipped - asking for anything else makes the browser synthesise it.
@@ -57,7 +57,7 @@ sources, which is all CI wants - the latin subsets are committed on purpose.
 
 ## Marks and cards
 
-`favicon.svg` is the source of truth for the mark. `favicon.ico`,
+`public/favicon.svg` is the source of truth for the mark. `favicon.ico`,
 `apple-touch-icon.png` and the site's Open Graph card come from
 `python tools/make-icons.py` (Pillow, plus the font cache above) - re-run it
 after changing the mark, and keep the geometry in the SVG and the script in

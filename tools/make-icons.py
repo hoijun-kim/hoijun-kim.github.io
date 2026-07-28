@@ -2,9 +2,9 @@
 
 Run from the repo root:  python tools/make-icons.py
 
-Outputs favicon.ico, apple-touch-icon.png and og.png. The mark geometry is a
-copy of favicon.svg (a 64-unit square); keep the two in step by hand if the
-mark ever changes. The card is set in the same IBM Plex the page ships, so run
+Outputs public/favicon.ico, public/apple-touch-icon.png and public/og.png. The
+mark geometry is a copy of public/favicon.svg (a 64-unit square); keep the two
+in step by hand if the mark ever changes. The card is set in the same IBM Plex the page ships, so run
 tools/make-fonts.py first - it leaves the TrueType copies Pillow needs under
 tools/.fonts/. Pillow is the only other dependency.
 """
@@ -15,6 +15,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "public"  # what Astro copies to the site root verbatim
 FONTS = Path(__file__).resolve().parent / ".fonts"
 
 IVORY = "#F4F1EA"
@@ -183,12 +184,12 @@ def main():
     # iOS masks the corners itself, so the touch icon is full-bleed and unframed.
     touch = Image.new("RGB", (180, 180), IVORY)
     touch.paste(draw_mark(140, framed=False), (20, 20))
-    touch.save(ROOT / "apple-touch-icon.png")
+    touch.save(OUT / "apple-touch-icon.png")
 
     ico = draw_mark(64, cut=True)
-    ico.save(ROOT / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
+    ico.save(OUT / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
 
-    make_og().save(ROOT / "og.png", optimize=True)
+    make_og().save(OUT / "og.png", optimize=True)
     print("wrote favicon.ico, apple-touch-icon.png, og.png")
 
 

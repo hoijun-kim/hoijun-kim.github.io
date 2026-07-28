@@ -7,7 +7,7 @@ faces the page actually uses are downloaded, and each one is cut down to the
 characters the page can contain.
 
 Needs: fonttools + brotli (`pip install fonttools brotli`).
-Writes: fonts/*.woff2 - commit the result, this is not run at build time.
+Writes: public/fonts/*.woff2 - commit the result, this is not run at build time.
 Also caches the unsubset TTFs under tools/.fonts/ (untracked), because
 tools/make-icons.py draws the Open Graph card in the same faces and Pillow
 cannot read woff2.
@@ -59,7 +59,7 @@ UNICODES = ",".join(
     ]
 )
 
-OUT = pathlib.Path(__file__).resolve().parent.parent / "fonts"
+OUT = pathlib.Path(__file__).resolve().parent.parent / "public" / "fonts"
 TTF_CACHE = pathlib.Path(__file__).resolve().parent / ".fonts"
 
 # The v1 css endpoint still answers an ancient UA with plain TrueType; css2
