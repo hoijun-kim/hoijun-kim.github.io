@@ -17,12 +17,11 @@ type Props = { post: CollectionEntry<"blog"> };
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 
-const fmt = (d: Date, lang: string) =>
-  d.toLocaleDateString(lang === "ko" ? "ko-KR" : "en-GB", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+// The byline is site chrome, marked lang="en" like the rest of it, so the date
+// is set in English on a Korean post too - the alternative is a Korean date
+// string inside an element that claims to be English.
+const fmt = (d: Date) =>
+  d.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" });
 
 const schema = {
   "@context": "https://schema.org",
@@ -50,14 +49,14 @@ const schema = {
 >
   <article class="post wrap">
     <header>
-      <a class="back" href="/blog/"><Icon name="arrow" size={13} /> writing</a>
+      <a class="back" href="/blog/" lang="en"><Icon name="arrow" size={13} /> writing</a>
       <h1>{post.data.title}</h1>
-      <p class="meta">
-        <time datetime={post.data.date.toISOString()}>{fmt(post.data.date, post.data.lang)}</time>
+      <p class="meta" lang="en">
+        <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
         {post.data.updated && (
           <>
             <span class="sep">/</span>
-            <span>updated {fmt(post.data.updated, post.data.lang)}</span>
+            <span>updated {fmt(post.data.updated)}</span>
           </>
         )}
         {headings.length > 2 && (
@@ -74,7 +73,7 @@ const schema = {
       <Content />
     </div>
 
-    <footer class="post-foot">
+    <footer class="post-foot" lang="en">
       <a class="btn sm" href="/blog/">More posts</a>
       <a class="btn sm" href="/rss.xml">RSS</a>
     </footer>

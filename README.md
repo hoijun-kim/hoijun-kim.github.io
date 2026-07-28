@@ -50,6 +50,13 @@ family name with a Hangul `unicode-range`, so the browser picks it per
 character and the font stack needs no changes. A Korean post costs tens of
 kilobytes; an English one costs nothing.
 
+Each page's Hangul is split by the weight it will be asked for, read off the
+tags and classes in the markup. If that split were wrong the character would
+not disappear - font matching would quietly serve it from the other weight, at
+the wrong thickness. `npm run check:fonts` asks a real browser what the cascade
+resolved for every text node and compares it against the shipped subsets; CI
+runs it on every deploy.
+
 `python tools/make-fonts.py` refetches everything (needs `fonttools` and
 `brotli`) and caches the unsubset TrueType sources under `tools/.fonts/`,
 which the icon and card scripts need. `--cache-only` fetches those sources and skips regenerating the shipped

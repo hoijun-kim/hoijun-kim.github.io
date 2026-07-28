@@ -16,6 +16,8 @@ export interface Props {
   /** JSON-LD, serialised into the head */
   schema?: Record<string, unknown>;
   publishedAt?: string;
+  /** for pages that are an answer to a bad request, not a destination */
+  noindex?: boolean;
 }
 
 const {
@@ -27,6 +29,7 @@ const {
   lang = "en",
   schema,
   publishedAt,
+  noindex = false,
 } = Astro.props;
 
 // Pages serves directories, so /blog answers with a 301 to /blog/. Keep the
@@ -43,7 +46,7 @@ const imageURL = new URL(image, Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     <link rel="alternate" type="application/rss+xml" title="Hoijun Kim" href="/rss.xml" />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

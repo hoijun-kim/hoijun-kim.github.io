@@ -71,7 +71,7 @@ const schema = {
   {posts.length > 0 && (
     <section class="writing wrap">
       <div class="sec-head rise">
-        <span class="label">Writing</span>
+        <h2 class="label">Writing</h2>
         <a class="more" href="/blog/">all posts <Icon name="arrow" size={13} /></a>
       </div>
       <ul class="posts">
@@ -89,7 +89,7 @@ const schema = {
   )}
 
   <section class="about wrap rise">
-    <div class="sec-head"><span class="label">Now</span></div>
+    <div class="sec-head"><h2 class="label">Now</h2></div>
     <p class="about-text">
       Building <b>fleet</b> towards a first stable release, and teaching <b>shape</b> to open
       files bigger than memory. Both are Go with a web front end in a native window, both are
@@ -121,6 +121,7 @@ const schema = {
   .lede { margin: 24px 0 0; max-width: 54ch; font-size: 1.06rem; color: var(--ink-2); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
 
+  h2.label { margin: 0; }
   .sec-head {
     display: flex; align-items: center; gap: 14px;
     padding-bottom: 14px; border-bottom: 1px solid var(--line);

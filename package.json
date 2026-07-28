@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build && python tools/post-build.py",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "check:fonts": "python tools/check-fonts.py"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.12",

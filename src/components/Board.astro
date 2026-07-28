@@ -9,7 +9,7 @@ const raw = JSON.stringify(doc, null, 2);
 
 <section class="work wrap" id="work">
   <div class="sec-head rise">
-    <span class="label">Work</span>
+    <h2 class="label">Work</h2>
     <span class="count">{work.length} projects</span>
     <div class="tabs" role="tablist" aria-label="View of the same data">
       <button class="tab" id="tab-board" type="button" role="tab" aria-selected="true" aria-controls="board">board</button>
@@ -61,6 +61,7 @@ const raw = JSON.stringify(doc, null, 2);
     display: flex; align-items: center; gap: 14px;
     padding-bottom: 14px; border-bottom: 1px solid var(--line);
   }
+  h2.label { margin: 0; }
   .count { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
 
   .tabs {

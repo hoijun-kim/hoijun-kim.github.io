@@ -50,6 +50,11 @@ jobs:
 
       - run: npm run build
 
+      # The Korean subsets are cut per weight from the markup; this asks a real
+      # browser whether that split matches what the cascade resolves, so a
+      # syllable never ships in the wrong thickness.
+      - run: npm run check:fonts
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

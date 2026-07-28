@@ -19,6 +19,7 @@ import html
 import re
 import subprocess
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -61,13 +62,18 @@ def font(stem: str, size: int) -> ImageFont.FreeTypeFont:
 # ---------------------------------------------------------------- Korean type
 
 
-def subset_korean(chars: set[str], stem: str) -> dict[str, Path]:
-    """Cut both weights down to `chars`; returns weight -> written file."""
+def subset_korean(by_weight: dict[str, set[str]], stem: str) -> dict[str, Path]:
+    """Cut each weight to the characters that can actually render at it.
+
+    A weight with nothing to show is not written at all: the home page, for
+    instance, only ever shows Korean inside a 600-weight post title.
+    """
     out_dir = DIST / "fonts" / "ko"
     out_dir.mkdir(parents=True, exist_ok=True)
-    unicodes = ",".join(f"U+{ord(c):04X}" for c in sorted(chars))
     written = {}
-    for weight in ("400", "600"):
+    for weight, chars in by_weight.items():
+        if not chars:
+            continue
         src = CACHE / f"plex-sans-kr-{weight}.ttf"
         if not src.exists():
             sys.exit(f"missing {src} - run `python tools/make-fonts.py` first")
@@ -75,7 +81,7 @@ def subset_korean(chars: set[str], stem: str) -> dict[str, Path]:
         subprocess.run(
             [
                 sys.executable, "-m", "fontTools.subset", str(src),
-                f"--unicodes={unicodes}",
+                "--unicodes=" + ",".join(f"U+{ord(c):04X}" for c in sorted(chars)),
                 "--layout-features=kern,liga",
                 "--flavor=woff2",
                 f"--output-file={dst}",
@@ -84,6 +90,59 @@ def subset_korean(chars: set[str], stem: str) -> dict[str, Path]:
         )
         written[weight] = dst
     return written
+
+
+# Which weight a run of text will be asked for. Per-character font matching
+# falls through to the next family in the stack, not to the site's other
+# weight, so a character in the wrong bucket renders in the OS font - the two
+# lists below have to match the stylesheets, and tools/check-fonts.py proves
+# in a real browser that they do.
+BOLD_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "strong", "b", "th"}
+BOLD_CLASSES = {"row-name", "post-title", "btn"}
+NORMAL_CLASSES = {"q"}  # the mono chip inside the hero h1
+SKIP_TAGS = {"script", "style"}
+
+
+class WeightedText(HTMLParser):
+    """Collects the page's text split by the weight it will be rendered at."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.bold = [False]
+        self.skip = 0
+        self.chars: dict[str, set[str]] = {"400": set(), "600": set()}
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in SKIP_TAGS:
+            self.skip += 1
+        if tag in VOID_TAGS:
+            return
+        classes = set((dict(attrs).get("class") or "").split())
+        bold = self.bold[-1]
+        if tag in BOLD_TAGS or classes & BOLD_CLASSES:
+            bold = True
+        if classes & NORMAL_CLASSES:
+            bold = False
+        self.bold.append(bold)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in SKIP_TAGS and self.skip:
+            self.skip -= 1
+        if tag not in VOID_TAGS and len(self.bold) > 1:
+            self.bold.pop()
+
+    def handle_data(self, data: str) -> None:
+        if self.skip:
+            return
+        found = set(HANGUL.findall(data))
+        if found:
+            self.chars["600" if self.bold[-1] else "400"] |= found
+
+
+VOID_TAGS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "source", "track", "wbr",
+}
 
 
 def face_css(stem: str, weight: str, family: str) -> str:
@@ -95,24 +154,27 @@ def face_css(stem: str, weight: str, family: str) -> str:
     )
 
 
-def add_korean(page: Path) -> tuple[int, int] | None:
+def add_korean(page: Path) -> tuple[dict[str, int], int] | None:
     markup = page.read_text(encoding="utf-8")
-    chars = set(HANGUL.findall(visible_text(markup)))
-    if not chars:
+    parser = WeightedText()
+    parser.feed(markup)
+    by_weight = parser.chars
+    if not any(by_weight.values()):
         return None
 
     stem = "-".join(page.relative_to(DIST).parts[:-1]) or "index"
-    files = subset_korean(chars, stem)
+    files = subset_korean(by_weight, stem)
 
-    # The mono family gets the same faces: code blocks quoting Korean would
-    # otherwise fall out of the shipped type entirely.
+    # The mono family reuses the regular face: nothing on the site sets Korean
+    # in bold mono, and a code block quoting Korean would otherwise fall out of
+    # the shipped type entirely.
     css = "".join(
         face_css(stem, w, family)
-        for family in ("Plex Sans", "Plex Mono")
-        for w in ("400", "600")
+        for w in files
+        for family in (("Plex Sans", "Plex Mono") if w == "400" else ("Plex Sans",))
     )
     page.write_text(markup.replace("</head>", f"<style>{css}</style></head>", 1), encoding="utf-8")
-    return len(chars), sum(f.stat().st_size for f in files.values())
+    return {w: len(c) for w, c in by_weight.items() if c}, sum(f.stat().st_size for f in files.values())
 
 
 # ------------------------------------------------------------------ OG cards
@@ -226,9 +288,10 @@ def main() -> None:
             print(f"og   {card}")
         korean = add_korean(page)
         if korean:
-            count, size = korean
+            counts, size = korean
             rel = page.relative_to(DIST)
-            print(f"ko   {rel}  {count} glyphs -> {size/1024:.1f} KB")
+            spread = " + ".join(f"{n}@{w}" for w, n in sorted(counts.items()))
+            print(f"ko   {rel}  {spread} glyphs -> {size/1024:.1f} KB")
 
     print(f"post-build done over {len(pages)} page(s)")
 
