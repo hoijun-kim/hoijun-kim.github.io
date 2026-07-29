@@ -19,6 +19,7 @@ The method is simple. After the build, read each post's HTML, collect the Hangul
 codepoints that actually appear in it, and cut a subset for that post alone.
 
 ```python
+import re
 chars = set(re.findall(r"[가-힣ㄱ-ㅎㅏ-ㅣ]", html))
 subset(font, unicodes=chars, output=f"fonts/ko/{slug}.woff2")
 ```

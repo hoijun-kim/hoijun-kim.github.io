@@ -17,6 +17,7 @@ lang: ko
 한글 코드포인트만 모아 그 글 전용 서브셋을 만든다.
 
 ```python
+import re
 chars = set(re.findall(r"[가-힣ㄱ-ㅎㅏ-ㅣ]", html))
 subset(font, unicodes=chars, output=f"fonts/ko/{slug}.woff2")
 ```

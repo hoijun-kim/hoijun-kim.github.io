@@ -103,3 +103,6 @@
 
 /* part 11 - dashed target curve behind the fits */
 .fig .curve.tgt { stroke: var(--muted); stroke-width: 4; opacity: 0.42; }
+
+/* part 5 - a fifth curve that has to stay apart from .ok */
+.fig .curve.ok3 { stroke: var(--accent); stroke-dasharray: 2 3; opacity: 0.9; }
