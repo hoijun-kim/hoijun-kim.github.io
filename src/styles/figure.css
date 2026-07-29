@@ -97,3 +97,6 @@
 
 /* part 9 - marker for a named point on a curve */
 .fig .mark { fill: var(--accent); }
+
+/* part 10 - panel titles for side-by-side matrices */
+.fig .ttl2 { fill: var(--ink-2); font-size: 11px; text-anchor: middle; font-weight: 600; }
