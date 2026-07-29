@@ -265,3 +265,6 @@ without it the model has no way at all to see word order.
 Eight parts. From where a tensor sits, through steps, derivatives, layers,
 batches, normalisation and generalisation, to a layer that computes its own
 weights. Measured and drawn, every time.
+
+The next part fills the hole just left open. If attention does not know about
+order, how does order get in? Positional encoding, measured.

@@ -94,3 +94,6 @@
 .fig .lbl-ax text.r { text-anchor: end; }
 .fig .lbl-ax .cap { fill: var(--muted); font-size: 10px; letter-spacing: 0.04em; }
 .fig .lbl-ax .cap.l { text-anchor: start; }
+
+/* part 9 - marker for a named point on a curve */
+.fig .mark { fill: var(--accent); }
