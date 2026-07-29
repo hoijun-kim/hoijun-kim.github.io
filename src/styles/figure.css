@@ -84,3 +84,13 @@
 /* the answer, tied to the node it belongs to rather than floating */
 .fig .grad-link path { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
 .fig .grad-link text { fill: var(--accent); font-size: 10.5px; dominant-baseline: middle; }
+
+/* part 8 - the attention matrix itself, one cell per (from, to) pair */
+.fig .hm rect { fill: var(--accent); }
+.fig .v { text-anchor: middle; font-size: 11px; }
+.fig .v.on { fill: var(--paper); }
+.fig .v.off { fill: var(--ink-2); }
+.fig .lbl-ax text { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+.fig .lbl-ax text.r { text-anchor: end; }
+.fig .lbl-ax .cap { fill: var(--muted); font-size: 10px; letter-spacing: 0.04em; }
+.fig .lbl-ax .cap.l { text-anchor: start; }

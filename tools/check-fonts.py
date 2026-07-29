@@ -43,7 +43,7 @@ CHROME_CANDIDATES = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ]
 
-HARNESS = """<!doctype html><meta charset=utf-8>
+HARNESS = r"""<!doctype html><meta charset=utf-8>
 <style>iframe{width:1100px;height:800px;border:0}</style>
 <iframe id="f" src="__PAGE__"></iframe><pre id="out">PENDING</pre>
 <script>
