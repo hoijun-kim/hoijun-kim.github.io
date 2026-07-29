@@ -1,7 +1,7 @@
 ---
 title: "There is a line the learning rate cannot cross"
 description: "Plot what gradient descent does to a two-parameter loss and the divergence boundary stops being a matter of taste. It falls out of a calculation, and the experiment agrees to three decimal places."
-date: 2026-07-29
+date: 2025-07-29
 lang: en
 kind: guide
 series:

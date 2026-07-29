@@ -1,7 +1,7 @@
 ---
 title: "The layer holding two thirds of the parameters"
 description: "In a transformer block it is the feed-forward, not attention, that spends 2/3 of the parameters. This measures why the 4x expansion buys exactly nothing without a nonlinearity, and what the width actually adds."
-date: 2026-08-15
+date: 2025-08-15
 lang: en
 kind: guide
 series:

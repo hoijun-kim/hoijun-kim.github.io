@@ -1,7 +1,7 @@
 ---
 title: "Backpropagation is a ledger"
 description: "Follow the derivatives through a three-node graph by hand, then check them against numerical differences. Backpropagation is not a new way to differentiate - it is a way of not throwing away what you already computed."
-date: 2026-07-29
+date: 2025-07-29
 lang: en
 kind: guide
 series:

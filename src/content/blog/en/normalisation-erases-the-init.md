@@ -1,7 +1,7 @@
 ---
 title: "Normalisation erases the initialisation"
 description: "In part four three initialisations produced 1e-16, 0.97 and 0.15 after twenty layers. Add one line of normalisation per layer and all three land on the same number to four decimals. Here is what that costs."
-date: 2026-07-31
+date: 2025-07-31
 lang: en
 kind: guide
 series:

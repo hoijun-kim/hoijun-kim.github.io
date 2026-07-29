@@ -1,7 +1,7 @@
 ---
 title: "How positional encoding puts order back in"
 description: "Part eight left attention blind to order. This measures why writing the position in as a raw number breaks it, what sinusoids guarantee instead, and why the usual claim that similarity decays with distance is not true."
-date: 2026-08-05
+date: 2025-08-05
 lang: en
 kind: guide
 series:

@@ -1,7 +1,7 @@
 ---
 title: "Stack twenty layers and the gradient disappears"
 description: "Initialise at 0.01 and the activations are 1e-16 after twenty layers; initialise at 1.0 and the first layer's gradient is 1e8. Measure each layer and it becomes clear why initialisation is not a hyperparameter but a precondition."
-date: 2026-07-30
+date: 2025-07-30
 lang: en
 kind: guide
 series:

@@ -1,7 +1,7 @@
 ---
 title: "텐서는 사실 1차원이다"
 description: "reshape 은 왜 공짜이고 transpose 는 왜 데이터를 옮기지 않는가. 배열이 메모리에 어떻게 놓여 있는지 한 번 보고 나면, 나중에 만날 에러 메시지 절반이 미리 설명된다."
-date: 2026-07-29
+date: 2025-07-29
 lang: ko
 kind: guide
 series:

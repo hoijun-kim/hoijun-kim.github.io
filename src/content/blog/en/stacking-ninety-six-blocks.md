@@ -1,7 +1,7 @@
 ---
 title: "What breaks when you stack 96 blocks"
 description: "Between residual connections and where the norm goes, which one carries depth? Stacking from 6 blocks to 96 and measuring the gradient at every layer puts a number on it, and the two do not weigh the same."
-date: 2026-08-20
+date: 2025-08-20
 lang: en
 kind: guide
 series:

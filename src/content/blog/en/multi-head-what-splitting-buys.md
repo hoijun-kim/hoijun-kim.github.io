@@ -1,7 +1,7 @@
 ---
 title: "What splitting the head into eight actually changes"
 description: "The parameter count is identical, so why split at all. This measures the fact that one weighted average cannot carry two things, and what the rank ceiling on a single head makes outright impossible."
-date: 2026-08-10
+date: 2025-08-10
 lang: en
 kind: guide
 series:

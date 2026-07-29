@@ -1,7 +1,7 @@
 ---
 title: "Shipping Korean type only to the posts that need it"
 description: "A Korean webfont costs dozens of times what a latin one does. Cut each post a subset containing only the characters it actually uses and an English post pays nothing while a Korean one pays tens of kilobytes."
-date: 2026-07-28
+date: 2025-07-28
 lang: en
 kind: log
 ---

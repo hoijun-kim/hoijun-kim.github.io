@@ -1,7 +1,7 @@
 ---
 title: "A tensor is one-dimensional"
 description: "Why reshape is free and transpose never moves data. Once you have seen how an array actually lies in memory, half the error messages you will meet later are explained in advance."
-date: 2026-07-29
+date: 2025-07-29
 lang: en
 kind: guide
 series:

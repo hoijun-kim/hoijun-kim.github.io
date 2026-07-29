@@ -1,7 +1,7 @@
 ---
 title: "How to drive the training error to zero, and what it costs"
 description: "Fit eighteen points with a seventeen-degree polynomial and the training error is 3e-17. Perfectly fitted. On fresh points from the same distribution the error is 3.9e10. This walks the degrees to see what happened in between."
-date: 2026-07-31
+date: 2025-07-31
 lang: en
 kind: guide
 series:

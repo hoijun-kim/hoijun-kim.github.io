@@ -1,7 +1,7 @@
 ---
 title: "Why a noisier minibatch arrives sooner"
 description: "Instead of one exact step over all the data, take many inexact ones over parts of it. Measured over a single pass through the data, which one gets further down."
-date: 2026-07-30
+date: 2025-07-30
 lang: en
 kind: guide
 series:

@@ -1,7 +1,7 @@
 ---
 title: "One dataset, two views"
 description: "This site claims that fiddly technical work should be visible and clickable. Making the claim in prose would have been the easy way out, so the work section renders itself twice from a single source instead."
-date: 2026-07-28
+date: 2025-07-28
 lang: en
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Taking the attention weights out and looking at them"
 description: "Attention is a weighted average whose weights the data decides. This computes the matrix for six tokens and draws it, then measures what happens when the one line dividing by sqrt(d) is removed."
-date: 2026-08-01
+date: 2025-08-01
 lang: en
 kind: guide
 series:

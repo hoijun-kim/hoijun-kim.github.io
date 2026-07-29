@@ -1,7 +1,7 @@
 ---
 title: "Predicting characters with 637,156 parameters"
 description: "Twelve parts of pieces, wired together and actually run. Why the loss starts at ln(vocabulary), what happens when the causal mask comes off, and what one head turned out to have learned."
-date: 2026-08-25
+date: 2025-08-25
 lang: en
 kind: guide
 series:
