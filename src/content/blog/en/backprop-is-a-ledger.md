@@ -131,8 +131,8 @@ num_b = (L_of(w, b + h) - L_of(w, b - h)) / (2 * h)
 
 ```
         analytic                 numerical                agreement
-dL/dw   -0.26526985862215685     -0.26526985864860910     10 decimals
-dL/db   -0.13263492931107843     -0.13263492926879340      9 decimals
+dL/dw   -0.26526985862215685     -0.2652698586486091      10 decimals
+dL/db   -0.13263492931107843     -0.1326349292687934       9 decimals
 ```
 
 `dL/dw` parts company at the eleventh decimal, `dL/db` at the tenth. Two
