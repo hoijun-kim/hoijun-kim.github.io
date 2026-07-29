@@ -58,6 +58,7 @@
 .fig .curve.ok2 { stroke: var(--accent); stroke-dasharray: 5 3; opacity: 0.75; }
 .fig .curve.bad { stroke: var(--ink-2); stroke-dasharray: 5 3; }
 .fig .curve.bad2 { stroke: var(--ink-2); }
+.fig .axis line.floor { stroke: var(--muted); stroke-dasharray: 4 4; }
 
 /* part 3 - a computation graph read twice */
 .fig .edge path { stroke: var(--line-strong); stroke-width: 1.4; fill: none; }
