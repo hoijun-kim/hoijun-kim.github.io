@@ -1,0 +1,4 @@
+# The part 13 corpus is data, not prose. Its exact bytes are the experiment:
+# a CRLF conversion on checkout would add a character to the vocabulary and
+# move every number in that post, so it is never normalised.
+public/data/*.txt -text
