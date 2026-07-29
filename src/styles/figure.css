@@ -100,3 +100,6 @@
 
 /* part 10 - panel titles for side-by-side matrices */
 .fig .ttl2 { fill: var(--ink-2); font-size: 11px; text-anchor: middle; font-weight: 600; }
+
+/* part 11 - dashed target curve behind the fits */
+.fig .curve.tgt { stroke: var(--muted); stroke-width: 4; opacity: 0.42; }
