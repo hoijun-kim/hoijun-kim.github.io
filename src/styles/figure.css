@@ -36,6 +36,8 @@
 .fig .lbl.bad { fill: var(--ink-2); }
 
 /* part 1 - a buffer and two ways of reading it */
+/* one faint line per cell, so a dot below can be checked against the cell above */
+.fig .guide line { stroke: var(--line-strong); stroke-width: 1; opacity: 0.45; }
 .fig .cells rect { fill: var(--surface-2); stroke: var(--line-strong); }
 .fig .tick line { stroke: var(--line-strong); stroke-width: 1; }
 .fig .val text { fill: var(--ink); font-size: 11px; text-anchor: middle; }
@@ -49,6 +51,7 @@
 
 /* part 2 - loss against steps, one line per learning rate */
 .fig .axis line { stroke: var(--line); stroke-width: 1; }
+.fig .axis line.frame { stroke: var(--line-strong); }
 .fig .tick-lbl { fill: var(--muted); font-size: 9.5px; }
 .fig .curve { stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
 .fig .curve.ok { stroke: var(--accent); }
@@ -58,10 +61,21 @@
 
 /* part 3 - a computation graph read twice */
 .fig .edge path { stroke: var(--line-strong); stroke-width: 1.4; fill: none; }
+.fig .head { fill: var(--line-strong); stroke: none; }
+.fig .head-b { fill: var(--accent); stroke: none; }
 .fig .node rect { fill: var(--surface-2); stroke: var(--line-strong); }
 .fig .node rect.op { fill: var(--surface); stroke: var(--ink-2); }
 .fig .node rect.out { fill: var(--surface); stroke: var(--accent); }
 .fig .txt text { fill: var(--ink); text-anchor: middle; font-size: 11.5px; }
 .fig .fwd text { fill: var(--ink-2); text-anchor: middle; font-size: 10.5px; }
 .fig .bwd text { fill: var(--accent); text-anchor: middle; font-size: 10.5px; }
-.fig .lane { fill: var(--muted); font-size: 10px; letter-spacing: 0.06em; }
+
+/* the two passes, each marked on the row it belongs to */
+.fig .lane-mark path { stroke: var(--line-strong); stroke-width: 1; fill: none; }
+.fig .lane-mark path.b { stroke: var(--accent); }
+.fig .lane-mark text { fill: var(--muted); font-size: 10px; letter-spacing: 0.04em; }
+.fig .lane-mark text.b { fill: var(--accent); }
+
+/* the answer, tied to the node it belongs to rather than floating */
+.fig .grad-link path { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
+.fig .grad-link text { fill: var(--accent); font-size: 10.5px; dominant-baseline: middle; }

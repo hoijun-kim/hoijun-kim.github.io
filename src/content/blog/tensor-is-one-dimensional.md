@@ -45,7 +45,8 @@ True
 바꿔 적었을 뿐이고, `shares_memory` 가 True 인 이유가 그것이다.
 
 <figure class="fig">
-<svg viewBox="0 0 460 210" role="img" aria-label="한 줄로 놓인 12개 값 위에서, 서로 다른 stride 두 개가 같은 버퍼를 다르게 읽는 그림">
+<svg viewBox="0 0 460 214" role="img" aria-label="한 줄로 놓인 12개 값 위에서, 서로 다른 stride 두 개가 같은 버퍼를 다르게 읽는 그림">
+  <g class="guide"><line x1="19" y1="54" x2="19" y2="204"/><line x1="57" y1="54" x2="57" y2="204"/><line x1="95" y1="54" x2="95" y2="204"/><line x1="133" y1="54" x2="133" y2="204"/><line x1="171" y1="54" x2="171" y2="204"/><line x1="209" y1="54" x2="209" y2="204"/><line x1="247" y1="54" x2="247" y2="204"/><line x1="285" y1="54" x2="285" y2="204"/><line x1="323" y1="54" x2="323" y2="204"/><line x1="361" y1="54" x2="361" y2="204"/><line x1="399" y1="54" x2="399" y2="204"/><line x1="437" y1="54" x2="437" y2="204"/></g>
   <text class="cap" x="0" y="14">메모리 (버퍼 하나, 4바이트씩 12칸)</text>
   <g class="cells">
     <rect x="0" y="24" width="456" height="30" rx="5"/>
@@ -71,13 +72,14 @@ True
     <path d="M 323 100 L 361 100 L 399 100 L 437 100"/><circle cx="323" cy="100" r="3.2"/><circle cx="361" cy="100" r="3.2"/><circle cx="399" cy="100" r="3.2"/><circle cx="437" cy="100" r="3.2"/>
   </g>
   <g class="row-lbl">
-    <text x="19" y="122">행 0</text><text x="171" y="122">행 1</text><text x="323" y="122">행 2</text>
+    <text x="76" y="122">행 0</text><text x="228" y="122">행 1</text><text x="380" y="122">행 2</text>
   </g>
   <text class="cap" x="0" y="158">b.T, strides (4, 16) - 두 숫자를 맞바꿨을 뿐</text>
   <g class="hop c">
-    <path d="M 19 166 L 171 166 L 323 166"/><circle cx="19" cy="166" r="3.2"/><circle cx="171" cy="166" r="3.2"/><circle cx="323" cy="166" r="3.2"/>
-    <path d="M 57 180 L 209 180 L 361 180"/><circle cx="57" cy="180" r="3.2"/><circle cx="209" cy="180" r="3.2"/><circle cx="361" cy="180" r="3.2"/>
-    <path d="M 95 194 L 247 194 L 399 194"/><circle cx="95" cy="194" r="3.2"/><circle cx="247" cy="194" r="3.2"/><circle cx="399" cy="194" r="3.2"/>
+    <path d="M 19 162 L 171 162 L 323 162"/><circle cx="19" cy="162" r="3.2"/><circle cx="171" cy="162" r="3.2"/><circle cx="323" cy="162" r="3.2"/>
+    <path d="M 57 174 L 209 174 L 361 174"/><circle cx="57" cy="174" r="3.2"/><circle cx="209" cy="174" r="3.2"/><circle cx="361" cy="174" r="3.2"/>
+    <path d="M 95 186 L 247 186 L 399 186"/><circle cx="95" cy="186" r="3.2"/><circle cx="247" cy="186" r="3.2"/><circle cx="399" cy="186" r="3.2"/>
+    <path d="M 133 198 L 285 198 L 437 198"/><circle cx="133" cy="198" r="3.2"/><circle cx="285" cy="198" r="3.2"/><circle cx="437" cy="198" r="3.2"/>
   </g>
 </svg>
 <figcaption>같은 버퍼, 같은 12개 값. 바뀐 것은 읽는 보폭뿐이다.</figcaption>
