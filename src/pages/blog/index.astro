@@ -2,12 +2,17 @@
 import Base from "../../layouts/Base.astro";
 import Icon from "../../components/Icon.astro";
 import PostRow from "../../components/PostRow.astro";
-import { posts, seriesIndex } from "../../lib/posts";
+import { posts, seriesIndex, originals, alternateOf } from "../../lib/posts";
 
 const all = await posts();
+const listed = originals(all);
 const runs = seriesIndex(all);
-const inSeries = new Set(all.filter((p) => p.data.series).map((p) => p.id));
-const singles = all.filter((p) => !inSeries.has(p.id));
+const inSeries = new Set(listed.filter((p) => p.data.series).map((p) => p.id));
+const singles = listed.filter((p) => !inSeries.has(p.id));
+const altPath = (p: (typeof all)[number]) => {
+  const twin = alternateOf(p, all);
+  return twin ? `/blog/${twin.id}/` : undefined;
+};
 
 const schema = {
   "@context": "https://schema.org",
@@ -15,7 +20,7 @@ const schema = {
   name: "Hoijun Kim - writing",
   url: "https://hoijun-kim.github.io/blog/",
   inLanguage: ["en", "ko"],
-  blogPost: all.map((p) => ({
+  blogPost: listed.map((p) => ({
     "@type": "BlogPosting",
     headline: p.data.title,
     datePublished: p.data.date.toISOString(),
@@ -59,6 +64,7 @@ const schema = {
                   <span class="n" lang="en">{String(part.data.series!.part).padStart(2, "0")}</span>
                   <span class="part-link" lang={part.data.lang}>{part.data.title}</span>
                   {part.data.draft && <span class="d" lang="en">draft</span>}
+                  {altPath(part) && <span class="en-mark" lang="en">EN</span>}
                 </a>
               </li>
             ))}
@@ -73,7 +79,7 @@ const schema = {
     {singles.length === 0 ? (
       <p class="empty">Nothing else yet.</p>
     ) : (
-      <ul>{singles.map((post) => <PostRow post={post} />)}</ul>
+      <ul>{singles.map((post) => <PostRow post={post} alt={altPath(post)} />)}</ul>
     )}
   </section>
 </Base>
@@ -122,6 +128,11 @@ const schema = {
     font-variant-numeric: tabular-nums;
   }
   .run-parts a:hover .part-link { text-decoration: underline; text-underline-offset: 4px; }
+  .run-parts .en-mark {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 4px; padding: 0 5px;
+  }
   .run-parts .d {
     font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--paper); background: var(--muted);

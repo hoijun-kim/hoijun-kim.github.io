@@ -5,7 +5,7 @@ import Icon from "../../components/Icon.astro";
 import ViewCount from "../../components/ViewCount.astro";
 import Comments from "../../components/Comments.astro";
 import { viewsOn } from "../../config";
-import { posts, partsOf, fmtLong, KIND_LABEL, type Post } from "../../lib/posts";
+import { posts, partsOf, fmtLong, KIND_LABEL, alternateOf, isTranslation, baseId, type Post } from "../../lib/posts";
 import { seriesOf } from "../../data/series";
 import "../../styles/figure.css";
 
@@ -18,11 +18,24 @@ type Props = { post: Post; all: Post[] };
 const { post, all } = Astro.props;
 const { Content, headings } = await render(post);
 
+const twin = alternateOf(post, all);
+const here = `/blog/${post.id}/`;
+const there = twin ? `/blog/${twin.id}/` : undefined;
+const alternates: [string, string][] = twin
+  ? [[post.data.lang, here], [twin.data.lang, there!]]
+  : [];
+
 const run = post.data.series ? seriesOf(post.data.series.id) : undefined;
 const parts = post.data.series ? partsOf(all, post.data.series.id) : [];
-const here = parts.findIndex((p) => p.id === post.id);
-const prev = here > 0 ? parts[here - 1] : undefined;
-const next = here >= 0 && here < parts.length - 1 ? parts[here + 1] : undefined;
+const at = parts.findIndex((p) => p.id === baseId(post));
+// keep the reader in the language they are reading, when that part exists
+const sameLang = (p?: Post) => {
+  if (!p) return undefined;
+  if (!isTranslation(post)) return p;
+  return all.find((q) => q.id === `en/${p.id}`) ?? p;
+};
+const prev = sameLang(at > 0 ? parts[at - 1] : undefined);
+const next = sameLang(at >= 0 && at < parts.length - 1 ? parts[at + 1] : undefined);
 
 // The byline is site chrome, marked lang="en" like the rest of it, so the date
 // is set in English on a Korean post too - the alternative is a Korean date
@@ -34,9 +47,9 @@ const schema = {
   description: post.data.description,
   datePublished: post.data.date.toISOString(),
   ...(post.data.updated && { dateModified: post.data.updated.toISOString() }),
-  inLanguage: post.data.lang,
   author: { "@type": "Person", name: "Hoijun Kim", url: "https://hoijun-kim.github.io/" },
   mainEntityOfPage: `https://hoijun-kim.github.io/blog/${post.id}/`,
+  inLanguage: post.data.lang,
   image: `https://hoijun-kim.github.io/og/${post.id}.png`,
 };
 ---
@@ -46,14 +59,22 @@ const schema = {
   description={post.data.description}
   type="article"
   lang={post.data.lang}
-  image={`/og/${post.id}.png`}
+  image={`/og/${post.id.replace("/", "-")}.png`}
   imageAlt={post.data.title}
   publishedAt={post.data.date.toISOString()}
   schema={schema}
+  alternates={alternates}
 >
   <article class="post wrap">
     <header>
-      <a class="back" href="/blog/" lang="en"><Icon name="arrow" size={13} /> writing</a>
+      <div class="head-row">
+        <a class="back" href="/blog/" lang="en"><Icon name="arrow" size={13} /> writing</a>
+        {there && (
+          <a class="lang-switch" href={there} lang="en" hreflang={twin!.data.lang}>
+            {twin!.data.lang === "en" ? "Read in English" : "한국어로 읽기"}
+          </a>
+        )}
+      </div>
       {run && (
         <a class="run" href={`/blog/series/${post.data.series!.id}/`}>
           <span class="run-name">{run.name}</span>
@@ -139,6 +160,13 @@ const schema = {
     font-family: var(--mono); font-size: 12px; color: var(--muted);
   }
   .back :global(svg) { transform: rotate(180deg); }
+  .head-row { display: flex; align-items: baseline; gap: 14px; }
+  .lang-switch {
+    margin-left: auto; font-family: var(--mono); font-size: 12px;
+    color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 6px; padding: 2px 9px;
+  }
+  .lang-switch:hover { background: var(--accent-soft); }
   .back:hover { color: var(--accent); }
   h1 {
     margin: 18px 0 0;

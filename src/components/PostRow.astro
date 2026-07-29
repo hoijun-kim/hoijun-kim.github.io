@@ -5,8 +5,10 @@ export interface Props {
   post: Post;
   /** shown inside a series listing, where the part number replaces the kind */
   showPart?: boolean;
+  /** path of the same post in the other language, if it exists */
+  alt?: string;
 }
-const { post, showPart = false } = Astro.props;
+const { post, showPart = false, alt } = Astro.props;
 const d = post.data;
 ---
 
@@ -21,6 +23,7 @@ const d = post.data;
       )}
       {d.draft && <span class="badge draft" lang="en">draft</span>}
       {d.lang !== "en" && <span class="badge lang" lang="en">{d.lang}</span>}
+      {alt && <span class="badge alt" lang="en">also in EN</span>}
       <time datetime={d.date.toISOString()} lang="en">{fmtDate(d.date)}</time>
     </div>
     <p lang={d.lang}>{d.description}</p>
@@ -48,6 +51,7 @@ const d = post.data;
   .badge.guide, .badge.part { color: var(--accent); border-color: var(--accent); }
   .badge.draft { color: var(--paper); background: var(--muted); border-color: var(--muted); }
   .badge.lang { color: var(--ink-2); }
+  .badge.alt { color: var(--accent); border-color: var(--accent); }
 
   time {
     margin-left: auto; font-family: var(--mono); font-size: 12px;

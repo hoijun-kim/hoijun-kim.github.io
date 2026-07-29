@@ -19,16 +19,31 @@ export async function posts(): Promise<Post[]> {
     .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 
+/**
+ * A translation lives at en/<slug> next to <slug>. Pairing by path means a
+ * post gains a language toggle by existing, with nothing to register.
+ */
+export const isTranslation = (p: Post) => p.id.startsWith("en/");
+export const baseId = (p: Post) => (isTranslation(p) ? p.id.slice(3) : p.id);
+
+export function alternateOf(post: Post, all: Post[]): Post | undefined {
+  const wanted = isTranslation(post) ? baseId(post) : `en/${post.id}`;
+  return all.find((p) => p.id === wanted);
+}
+
+/** what the listings show: originals only, never both halves of a pair */
+export const originals = (all: Post[]) => all.filter((p) => !isTranslation(p));
+
 /** the posts of one series, in reading order rather than by date */
 export function partsOf(all: Post[], id: string): Post[] {
-  return all
+  return originals(all)
     .filter((p) => p.data.series?.id === id)
     .sort((a, b) => a.data.series!.part - b.data.series!.part);
 }
 
 /** every series that has at least one post, newest first by its latest part */
 export function seriesIndex(all: Post[]) {
-  const ids = [...new Set(all.map((p) => p.data.series?.id).filter(Boolean) as string[])];
+  const ids = [...new Set(originals(all).map((p) => p.data.series?.id).filter(Boolean) as string[])];
   return ids
     .map((id) => ({ id, meta: seriesOf(id)!, parts: partsOf(all, id) }))
     .filter((s) => s.meta && s.parts.length)

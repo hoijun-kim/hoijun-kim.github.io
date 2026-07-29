@@ -18,6 +18,8 @@ export interface Props {
   publishedAt?: string;
   /** for pages that are an answer to a bad request, not a destination */
   noindex?: boolean;
+  /** the same page in another language: [lang, path] */
+  alternates?: [string, string][];
 }
 
 const {
@@ -30,6 +32,7 @@ const {
   schema,
   publishedAt,
   noindex = false,
+  alternates = [],
 } = Astro.props;
 
 // Pages serves directories, so /blog answers with a 301 to /blog/. Keep the
@@ -48,6 +51,19 @@ const imageURL = new URL(image, Astro.site).href;
     <meta name="description" content={description} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     <link rel="alternate" type="application/rss+xml" title="Hoijun Kim" href="/rss.xml" />
+    {alternates.map(([code, path]) => (
+      <link rel="alternate" hreflang={code} href={new URL(path, Astro.site).href} />
+    ))}
+    {alternates.length > 0 && (
+      /* x-default names the fallback for a reader whose language matches
+         neither, so it must be the same URL on every page of the set - the
+         English one, which more readers can use */
+      <link
+        rel="alternate"
+        hreflang="x-default"
+        href={new URL((alternates.find(([c]) => c === "en") ?? alternates[0]!)[1], Astro.site).href}
+      />
+    )}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
