@@ -13,7 +13,10 @@ The pieces are all in hand. Now they get wired together and run. The goal is not
 performance but **measurement**.
 
 The corpus is the thirteen English posts on this blog. Strip the figure SVGs and
-that is `75,353` characters over a vocabulary of `100`. Split 90/10, `67,817`
+that is `75,353` characters over a vocabulary of `100`. The blog keeps growing and
+the corpus with it, so exactly what was trained on is frozen at
+[/data/part13-corpus.txt](/data/part13-corpus.txt); every number below comes from
+that file. Split 90/10, `67,817`
 characters to train on and `7,536` to validate against. The model is Pre-LN as
 part twelve concluded, three blocks, `d=128`, four heads, 128 characters of
 context, `637,156` parameters.

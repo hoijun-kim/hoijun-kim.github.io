@@ -1,0 +1,1830 @@
+The first seven parts were about stacking layers and measuring steps. This one
+looks at a layer with a different shape. Attention is, in the end, a **weighted
+average**; what is unusual is that the weights are not learned constants but
+**computed from the input every time**.
+
+Those weights never appear on screen. Take them out and draw them.
+
+## Six tokens
+
+Build embeddings where three topics are shared by two tokens each: `t0` with
+`t3`, `t1` with `t4`, `t2` with `t5`.
+
+```python
+import numpy as np
+
+X = 2.6 * np.array([
+    [1.0, 0.2, 0.0, 0.0],   # t0
+    [0.0, 1.0, 0.3, 0.0],   # t1
+    [0.0, 0.0, 1.0, 0.2],   # t2
+    [0.9, 0.3, 0.0, 0.0],   # t3  - same topic as t0
+    [0.1, 0.9, 0.2, 0.0],   # t4  - same topic as t1
+    [0.0, 0.1, 0.9, 0.3],   # t5  - same topic as t2
+])
+d = X.shape[1]
+
+def softmax(a):
+    a = a - a.max(-1, keepdims=True)
+    e = np.exp(a)
+    return e / e.sum(-1, keepdims=True)
+
+A = softmax(X @ X.T / np.sqrt(d))     # the attention weights
+out = A @ X                           # the weighted average they produce
+```
+
+The projection matrices that make `Q`, `K` and `V` are deliberately left out.
+Including all three mixes up what comes from the structure and what comes from
+training. Here `Q = K = V = X`, so only the **structure** is on show.
+
+
+
+## A row is one token's gaze
+
+Row `t0` gives `0.510` to itself, `0.389` to `t3` which shares its topic, and
+between `0.015` and `0.039` to the rest. The ratio of partner to unrelated is
+`0.389 / 0.015`, about 26 times. All six rows have the same shape: **in every
+row the top two cells are the token itself and its topic partner**, and those
+two take between `0.81` and `0.90` of the row. The remaining four together come
+to under `0.2`, the largest of them `0.063`.
+
+The **order** of those top two differs by row, though. `t3`, `t4` and `t5` give
+more to their partner than to themselves - `t3` gives itself `0.382` and `t0`
+`0.468`. A dot product sees magnitude as well as direction, and with norms of
+`2.651` for `t0` against `2.467` for `t3`, `t3` finds `t0` a closer match than
+itself. Attention holds no rule saying "I look at me". It has one rule,
+similarity, and size counts as part of similarity.
+
+Each row sums to one, because what attention does is not **selection** but
+**allocation**. It decides how much to look where, and mixes the values in that
+proportion. Multiplying by this matrix, `A @ X`, is the layer's output.
+
+Nothing here was learned. Similar embeddings give a large dot product, and a
+large dot product gets a large share from the softmax. A real transformer uses
+`XW_q` and `XW_k` instead of `X`, but what those `W`s do is **choose which
+similarity to look at**, not change this structure.
+
+## The line that divides by sqrt(d)
+
+There is a `/ np.sqrt(d)` after `X @ X.T`. Here is what happens without it, as
+the dimension grows - eight random vectors, an 8x8 attention.
+
+```python
+for d in (4, 16, 64, 256, 1024):
+    rng = np.random.default_rng(0)
+    for _ in range(200):                       # averaged over 200 trials
+        q = rng.standard_normal((8, d))
+        k = rng.standard_normal((8, d))
+        L = q @ k.T
+        raw, scaled = softmax(L), softmax(L / np.sqrt(d))
+```
+
+```
+    d   logit sd   max prob (raw)   max prob (scaled)   entropy (raw)   entropy (scaled)
+    4       1.93            0.526               0.342           1.290              1.750
+   16       3.88            0.755               0.359           0.662              1.732
+   64       7.94            0.872               0.357           0.323              1.728
+  256      15.81            0.937               0.361           0.157              1.719
+ 1024      31.89            0.968               0.363           0.078              1.716
+```
+
+Spreading evenly over eight would give an entropy of `2.079`.
+
+The logits' standard deviation grows with the dimension. A dot product of two
+vectors with unit-variance components is a sum of `d` terms, so its standard
+deviation is `sqrt(d)`; the measured `1.93, 3.88, 7.94, 15.81, 31.89` sit right
+on top of `2, 4, 8, 16, 32`.
+
+Softmax sharpens as its inputs spread. So at `d=1024` the largest probability
+climbs to `0.968` and the entropy falls to `0.078` against `2.079` for looking
+evenly. **It looks at one place and throws away the rest.** That is not a
+weighted average any more, it is a selection.
+
+Dividing by `sqrt(d)` brings the logits' standard deviation back to about one
+regardless of dimension. In the table, while the dimension grows 256-fold, the
+largest probability moves from `0.342` to `0.363` and the entropy from `1.750`
+to `1.716` - which is to say, not at all.
+
+## The real problem is the gradient
+
+Why is sharpening bad? Part three answers it. The softmax Jacobian has
+`p_i(1-p_i)` on the diagonal and `-p_i p_j` off it. Once the probability piles
+up in one place and `p` sits near 0 or 1, both terms die. What follows measures
+its trace, `sum p(1-p)`; a small trace means the whole Jacobian is small.
+
+```
+    d   sum p(1-p) (raw)   sum p(1-p) (scaled)
+    4             0.6052                0.7747
+   16             0.3397                0.7691
+   64             0.1809                0.7705
+  256             0.0908                0.7668
+ 1024             0.0465                0.7651
+```
+
+Without the division this keeps shrinking with dimension, down to `0.0465` at
+`d=1024`. With it, the value does not budge from about `0.77`. **A factor of
+16.5.** It is the same accident as part four - saturate the forward value and
+the derivative at that point disappears. `sqrt(d)` is not performance tuning but
+**the condition under which training starts**.
+
+## Attention does not know about order
+
+One last thing. The matrix above was built from the **contents** of the tokens.
+Position entered nowhere.
+
+```python
+perm = [3, 1, 5, 0, 4, 2]
+A2 = softmax(X[perm] @ X[perm].T / np.sqrt(d))
+np.allclose(A2 @ X[perm], (A @ X)[perm])   # True
+```
+
+Shuffle the inputs and the outputs shuffle identically. The values do not
+change, **only their places do**. Attention has no "before" and no "after".
+
+In a sentence, order is meaning. So a transformer adds position separately.
+Why positional encoding is needed is entirely explained by this one experiment:
+without it the model has no way at all to see word order.
+
+## So
+
+- Attention is a weighted average and the weights are computed from the input.
+  Each row sums to one
+- That matrix can be taken out and looked at. Here every row's top two cells are
+  the token and its topic partner: `0.389` against `0.015` for an unrelated one,
+  a factor of 26
+- `sqrt(d)` undoes the `sqrt(d)` growth of the logits with dimension. Without it,
+  `d=1024` saturates at max probability `0.968` and entropy `0.078`
+- Saturation is paid for in gradient: `0.0465` against `0.7651` at `d=1024`, a
+  factor of 16.5
+- Attention knows nothing about order. Positional encoding is not decoration, it
+  supplies information that is otherwise absent
+
+Eight parts. From where a tensor sits, through steps, derivatives, layers,
+batches, normalisation and generalisation, to a layer that computes its own
+weights. Measured and drawn, every time.
+
+The next part fills the hole just left open. If attention does not know about
+order, how does order get in? Positional encoding, measured.
+
+In the previous part the gradient was written by hand. Two parameters and a
+one-line formula made that possible. Stack layers and it stops being possible,
+which is what backpropagation is for.
+
+Most of the difficulty people report with it comes from its being introduced as
+a new kind of differentiation. It is not. The only rule is the chain rule from
+school, and backpropagation is the trick of **writing the intermediate values
+into a ledger instead of discarding them**.
+
+## One neuron
+
+Start with the smallest real thing: one input, one weight, one bias, a sigmoid,
+and squared error.
+
+```python
+import numpy as np
+
+w, b, x, t = 0.5, -0.2, 2.0, 1.0
+
+z = w * x + b                 # 0.8
+a = 1 / (1 + np.exp(-z))      # 0.689974
+L = (a - t) ** 2              # 0.096116
+```
+
+```
+z=0.800000  a=0.689974  L=0.096116
+```
+
+Now for `dL/dw`. Read the chain rule like this: wobble `w` and `z` wobbles,
+wobble `z` and `a` wobbles, wobble `a` and `L` wobbles. Multiply the ratios of
+the wobbles.
+
+
+
+Three pieces, computed separately.
+
+```python
+dL_da = 2 * (a - t)     # -0.620051
+da_dz = a * (1 - a)     #  0.213910
+dz_dw = x               #  2.0
+```
+
+`a * (1 - a)` is the sigmoid's derivative, and here is the first economy: `a` is
+**already in the ledger from the forward pass**, so the sigmoid is never
+evaluated again. The stored value is used as it stands.
+
+Multiply and it is done.
+
+```python
+dL_dz = dL_da * da_dz            # -0.132635
+print(dL_dz * dz_dw)             # dL/dw
+print(dL_dz * 1.0)               # dL/db
+```
+
+```
+dL/dw=-0.265270  dL/db=-0.132635
+```
+
+## Do not trust it, check it
+
+Hand-derived formulas are easy to get wrong, so compare against numerical
+differences. Wobble the parameter a little and measure how much the loss moves.
+
+```python
+def L_of(w_, b_):
+    return (1 / (1 + np.exp(-(w_ * x + b_))) - t) ** 2
+
+h = 1e-6
+num_w = (L_of(w + h, b) - L_of(w - h, b)) / (2 * h)
+num_b = (L_of(w, b + h) - L_of(w, b - h)) / (2 * h)
+```
+
+```
+        analytic                 numerical                agreement
+dL/dw   -0.26526985862215685     -0.2652698586486091      10 decimals
+dL/db   -0.13263492931107843     -0.1326349292687934       9 decimals
+```
+
+`dL/dw` parts company at the eleventh decimal, `dL/db` at the tenth. Two
+quantities measured the same way, at the same `h`, landing on different accuracy
+is already the hint: the precision of a numerical derivative is not a fixed
+number. It depends on what is being measured and on `h`.
+
+This comparison is called **gradient checking**, and it is the first safety net
+to attach when implementing a layer yourself. It needs two forward passes per
+parameter, so it is useless for training. For checking it carries the `h`
+problem below, so it is better used against a stated threshold - relative error
+under 1e-8, say - than a digit count.
+
+The two-sided difference is not an accident either. Its truncation error goes
+like `h^2`, so cutting `h` by ten cuts the error by a hundred. That is the left
+column below.
+
+```
+h=1e-2  error 8.9e-06        h=1e-6  error 2.6e-11
+h=1e-3  error 8.9e-08        h=1e-8  error 2.3e-09
+h=1e-4  error 8.9e-10        h=1e-10 error 3.1e-08
+h=1e-5  error 6.3e-12        h=1e-12 error 2.9e-06
+```
+
+Past `1e-5` the direction reverses. `L(w+h)` and `L(w-h)` are nearly equal, so
+subtracting them destroys significant digits, and dividing by a tiny `2h`
+amplifies what is left. At `1e-12` the estimate is worse than at `1e-2`. The
+useful `h` is not the smallest one but somewhere in the middle - around `1e-5`
+in double precision.
+
+## Where paths meet, derivatives add
+
+What happens when a node is used twice? Practically all of the confusion in
+backpropagation lives here.
+
+```python
+a, b = 3.0, 4.0
+c = a * b        # 12
+d = a + c        # 15  -> a was used twice
+```
+
+`a` reaches `d` by two routes, directly and through `c`. The rule is simple:
+**add the contribution of every path.**
+
+```
+dd/da = 1 (direct) + 1 x b (through c) = 1 + 4 = 5
+numerical: 5.000000
+```
+
+That is why a framework accumulates gradients with `+=` rather than `=` **within
+one backward pass**.
+
+`zero_grad()` is one step removed from this. That is accumulation **between**
+passes, not within one, and frameworks do it deliberately because it is useful:
+splitting a batch, backpropagating several times and updating once relies on it.
+The price is that a step which does not clear the buffer inherits the previous
+step's gradient.
+
+## Why backwards
+
+Multiplying the derivatives front to back gives the same answer. It is a real
+method, called forward mode. Nobody uses it in deep learning, because of the
+shape of the problem.
+
+There are N parameters and one loss. Going forwards means one sweep per
+parameter, N sweeps. Going backwards starts from the single loss and produces
+every parameter's gradient in **one**. At a hundred million parameters that is a
+hundred million to one.
+
+Backpropagation is not special in itself. What is special is that counting
+backwards is overwhelmingly cheaper when the entrance is wide and the exit is a
+single number.
+
+## So
+
+- The mathematics is one chain rule. The rest is not discarding the forward pass
+- Where a node branches, the paths add. That is what `+=` inside one backward
+  pass is for; `zero_grad()` is the separate business of clearing between passes
+- Check hand-derived gradients numerically, near `h=1e-5`, against a relative
+  error threshold
+- The reason to go backwards is not calculus. It is arithmetic on counts
+
+That is tensors, steps and gradients. The next part stacks layers and watches
+what twenty of these multiplications do to a gradient.
+
+The previous part said the chain rule is multiplication. Three layers, three
+multiplications; twenty layers, twenty. Multiply a number slightly below one by
+itself twenty times and it sticks to zero; slightly above one and it explodes.
+That obvious arithmetic held deep learning back for years, and the initial
+values are what set the base of the multiplication.
+
+## Build twenty layers and measure
+
+Draw each layer's weights from a normal distribution, varying only the standard
+deviation. The activation is `tanh`, the width 256, the depth 20.
+
+```python
+import numpy as np
+rng = np.random.default_rng(0)
+N, D, L = 512, 256, 20
+
+def run(scale):
+    x = rng.standard_normal((N, D))         # input standard deviation 1
+    h, Ws, hs = x, [], [x]
+    for _ in range(L):
+        W = rng.standard_normal((D, D)) * scale
+        h = np.tanh(h @ W)
+        Ws.append(W); hs.append(h)
+
+    g = rng.standard_normal(h.shape) / np.sqrt(N)   # a gradient from the loss
+    grads = []
+    for i in range(L - 1, -1, -1):
+        g = g * (1 - hs[i+1] ** 2)                  # tanh derivative
+        grads.append((hs[i].T @ g).std())           # this layer's weight gradient
+        g = g @ Ws[i].T
+    return [a.std() for a in hs[1:]], grads[::-1]
+```
+
+Three initialisations: very small (0.01), very large (1.0), and `1/sqrt(n)`. The
+last is Xavier initialisation.
+
+```
+                  act L1     act L20      grad L1      grad L20     L20/L1
+small 0.01        1.56e-01   1.14e-16     7.27e-16     7.01e-16     0.96
+large 1.0         9.75e-01   9.74e-01     1.74e+08     1.80e-01     1.0e-09
+Xavier 1/sqrt(n)  6.27e-01   1.62e-01     1.92e-01     1.58e-01     0.82
+```
+
+
+
+## Too small: everything shrinks together
+
+`0.01` shrinks the activations at every layer. What is 0.156 at layer 1 is
+`1.14e-16` at layer 20. Sixteen digits gone.
+
+The gradients are flat at around `7e-16` across all layers. No explosion, no
+vanishing gradient in the usual sense - **all of them are equally close to
+zero**. No learning rate makes weights move at that magnitude.
+
+It is tempting to blame `tanh`. Measured, it is the opposite. The activations
+are packed near zero, so the derivative `1 - h^2` is 0.9755 at layer 1 and
+`1.0000` to four decimals from layer 3 on. **The derivative is as large as it
+can be.**
+
+The culprit is the weight scale. `0.01 x sqrt(256) = 0.16` is the per-layer
+factor, and the forward signal shrinks by a measured 0.160 per layer. The
+backward signal shrinks by the same 0.16 travelling the other way. Because both
+directions decay at the same rate, every layer's weight gradient is
+`|input| x |backward signal|`, which lands on `0.16^20` regardless of the layer.
+That symmetry is the flat line in the figure.
+
+## Too large: every layer a different world
+
+`1.0` is the opposite. The activation is stuck at 0.975 from layer 1 to layer 20:
+`tanh` has saturated. The inputs are large, the outputs pinned near +-1, and in
+that region `tanh`'s derivative `1 - h^2` is close to zero.
+
+Yet the gradients do not die. The first layer sits at `1.74e+08`. Multiplying
+back through `W` grows the signal faster than the derivative shrinks it. The
+problem is not the size itself but the **spread between layers**: layer 1 and
+layer 20 differ by `1e9`. There is no single learning rate that serves both.
+Tune for layer 20 and layer 1 diverges; tune for layer 1 and layer 20 stops.
+This is part two's "one steepest direction sets the ceiling", opened up along
+the depth of the network.
+
+## Xavier: set the base of the multiplication to one
+
+`1/sqrt(n)` comes out of one line of variance arithmetic. The variance of a sum
+of `n` terms is `n` times the variance of one, so setting the weight variance to
+`1/n` preserves the variance across a layer. It puts the base of the
+multiplication near one.
+
+To be precise, that calculation balances the **forward** pass only, and what it
+yields is `1/n_in` - LeCun initialisation. Balancing the backward pass as well
+would want `1/n_out`, and both cannot hold at once; Xavier takes the compromise
+`2/(n_in + n_out)`. Here every layer is 256 wide, so the two coincide exactly,
+but carrying this derivation to a layer with different widths gives a different
+constant from any framework's `xavier_normal_`.
+
+The measurement follows. The gradient is `0.192` at layer 1 and `0.158` at layer
+20, a factor of 0.82 across twenty layers.
+
+The comparison needs two axes to be fair. On **uniformity** alone the small
+initialisation is actually flatter, at 0.96 - but the flat value is `7e-16`, so
+nothing happens. On **magnitude** alone the large one is generous, but its
+layers differ by `1e9`. Only Xavier satisfies both: magnitude `0.19`, layer ratio
+`0.82`.
+
+Honestly, it is not perfect either. The activations fall from 0.627 to 0.162
+over twenty layers, about fourfold, because `tanh` has unit gain only near the
+origin and less further out. He initialisation with `2/n` exists for the ReLU
+family for the same reason: half the outputs are zeroed, so the variance is
+compensated twofold.
+
+## So
+
+- Stacking layers means multiplying the same number that many times. Off one,
+  and the drift is exponential
+- Too small and forward and backward shrink together at the same rate; too large
+  and the spread between layers opens up. Neither is fixable with a learning
+  rate
+- `1/sqrt(n)` is not magic, it is a variance-preservation formula. Change the
+  activation and the constant changes
+- Initialisation is less a hyperparameter to tune than the condition under which
+  training can start at all
+
+Batch normalisation is visible in the same picture: it rescales at every layer,
+so the base is pinned at one and the initial scale stops mattering - with it,
+all three initialisations reach 0.63 at layer 20.
+
+Residual connections work differently. A block is `h + f(h)`, so the Jacobian is
+`I + J` and an **identity path that skips the multiplication** always survives
+on the way back. It does not pin the product at one; it opens a route around it.
+On its own it makes the forward scale grow - measured, the activation standard
+deviation climbs from 1.2 to 3.8 over twenty blocks. That is why real residual
+networks pair it with normalisation or scale the branch by `1/sqrt(L)`.
+
+The next part shakes the data instead of the network. It measures why taking a
+step from a fraction of the data - noisier, and wrong more often - arrives
+sooner than one step from all of it.
+
+This site ships IBM Plex Sans for latin text rather than falling back to
+whatever the operating system has. Four faces, 57 KB together. That is cheap for
+the same page rendering the same way everywhere.
+
+Korean is a different matter. Carry all 11,172 precomposed syllables and one
+face is over 4 MB. Nobody should download that to read one post.
+
+## Cut it per post
+
+The method is simple. After the build, read each post's HTML, collect the Hangul
+codepoints that actually appear in it, and cut a subset for that post alone.
+
+```python
+chars = set(re.findall(r"[가-힣ㄱ-ㅎㅏ-ㅣ]", html))
+subset(font, unicodes=chars, output=f"fonts/ko/{slug}.woff2")
+```
+
+A post like this one uses a few hundred characters. The subset comes out at
+roughly one percent of the original, and a post written in English carries no
+Korean face at all.
+
+## The price
+
+Editing a post means rebuilding its font. That is the build's job, so it costs no
+attention - but editing the HTML by hand without a build is no longer possible.
+
+And a subset is valid only for its own post. Read several in a row and each one
+fetches a new font. Once there are dozens of posts it would be better to fetch a
+shared subset of the 2,350 common syllables first and fill in the rest per post.
+With two posts that optimisation is premature.
+
+## Choosing the face
+
+**IBM Plex Sans KR**. Same family as the latin, so the voice does not split, and
+OFL, so self-hosting is fine. Better than adding one more typeface to the mix.
+
+The learning rate is usually taught like this: too small is slow, too large
+diverges. True, and useless, because it never says how large is large.
+
+With two parameters the boundary can be computed **exactly**. Compute it once
+and the same reason explains why the learning rate cannot be raised on a model
+with a hundred million parameters.
+
+## Building a loss surface
+
+Four points, one straight line. The parameters are the slope `w` and the
+intercept `b`.
+
+```python
+import numpy as np
+
+x = np.array([1., 2., 3., 4.])
+y = np.array([2., 4., 5., 8.])
+
+def loss(w, b):
+    return np.mean((w * x + b - y) ** 2)
+
+def grad(w, b):
+    e = w * x + b - y
+    return 2 * np.mean(e * x), 2 * np.mean(e)
+```
+
+The answer is known in advance: least squares gives `w = 1.9`, `b = 0`, with
+loss `0.175`. The data carries noise, so the loss does not reach zero.
+
+Two parameters make the loss a surface. This one is exactly quadratic, so the
+contours are ellipses - not round ones, but stretched more than sevenfold in one
+direction. That elongation decides everything in the next two sections.
+
+## One step
+
+Gradient descent is one line. Step against the gradient, by the learning rate.
+
+```python
+w = b = 0.0
+lr = 0.05
+for step in range(5):
+    gw, gb = grad(w, b)
+    w, b = w - lr * gw, b - lr * gb
+    print(f"step {step+1}: w={w:.4f} b={b:.4f} loss={loss(w, b):.4f}")
+```
+
+```
+step 1: w=1.4250 b=0.4750 loss=0.9647
+step 2: w=1.6625 b=0.5463 loss=0.2478
+step 3: w=1.7041 b=0.5510 loss=0.2267
+step 4: w=1.7133 b=0.5449 loss=0.2247
+step 5: w=1.7171 b=0.5371 loss=0.2232
+```
+
+The first step dwarfs the rest: the loss falls from 27.25 to 0.96. After that it
+looks stopped - five steps move it from 0.2478 to 0.2232, about one percent.
+
+It has not stopped. Two hundred steps from the start reach `w=1.8904`,
+`b=0.0284`, loss `0.1751`, which is essentially the minimum. **Across the valley
+it is fast, along the valley it is slow.** The contours being long ellipses
+rather than circles shows up directly in the walk.
+
+## The boundary is a calculation
+
+Raise the learning rate.
+
+```
+lr=0.11   loss after 200 steps 0.175
+lr=0.119  loss after 200 steps 0.343
+lr=0.121  loss after 200 steps 100803
+lr=0.13   loss after 200 steps 7.3e+28
+```
+
+
+
+Something snaps between 0.119 and 0.121. That something is the **curvature** of
+the loss.
+
+For a quadratic loss the curvature is one matrix.
+
+```python
+H = 2 * np.array([[np.mean(x*x), np.mean(x)],
+                  [np.mean(x),   1.0        ]])
+print(H)                        # [[15.  5.] [ 5.  2.]]
+print(np.linalg.eigvalsh(H))    # [ 0.2994 16.7006]
+print(2 / 16.7006)              # 0.11976
+```
+
+Two eigenvalues. The larger, `16.70`, is the curvature of the steepest
+direction; the smaller, `0.30`, the gentle one along the valley. On this surface
+gradient descent converges under exactly one condition.
+
+```
+lr < 2 / largest eigenvalue = 2 / 16.7006 = 0.1198
+```
+
+That is why 0.119 survived and 0.121 exploded. Not a feel for it - a line, and
+it holds to three decimal places.
+
+Why `2/lambda` is clear if you isolate one direction. If the loss along it is
+`lambda/2 * d^2`, the gradient is `lambda*d`, and one step leaves the distance
+at `d(1 - lr*lambda)`. Shrinking needs `|1 - lr*lambda| < 1`, that is
+`lr < 2/lambda`. Above that, every step lands further out on the other side.
+Trace `lr=0.13` and that is exactly the shape: `(0, 0)` jumps to `(3.7, 1.24)`,
+returns to `(-0.62, -0.26)`, then goes out to `(4.46, 1.44)`. The straight climb
+of that curve in the figure is this ricochet.
+
+## Why this is the same story at scale
+
+With a hundred million parameters the Hessian cannot be written down - it would
+need the square of that many entries. But a Hessian-vector product costs two
+backward passes, and power iteration on top of it recovers the largest
+eigenvalue. You cannot see all of it; you can see the one that sets stability.
+The structure is unchanged.
+
+- Stability is set by **one direction, the steepest**. However gentle the rest,
+  if that one diverges everything goes with it
+- Slowness comes from the other end, the **gentlest** direction. The learning
+  rate has to respect the steepest, so the gentlest crawls at that rate
+- The ratio of the eigenvalues, `16.7 / 0.30 = 56`, is this problem's condition
+  number. The larger it is, the longer the ellipse and the more laborious
+  gradient descent becomes
+
+This is also where normalising the input becomes precise. It is often explained
+as "shrink the inputs and you can raise the learning rate", which is half right.
+Measured on this data:
+
+```
+x as is             eigenvalues [0.299, 16.70]   condition 55.8   lr ceiling 0.120
+x times 0.1         eigenvalues [0.024,  2.13]   condition 90.4   lr ceiling 0.940
+x minus its mean    eigenvalues [2.00,   2.50]   condition  1.2   lr ceiling 0.800
+centred and scaled  eigenvalues [2.00,   2.00]   condition  1.0   lr ceiling 1.000
+```
+
+Shrinking alone lifts the ceiling eightfold and makes **the conditioning worse**
+(55.8 to 90.4). The surface got longer, so whatever the higher ceiling buys is
+handed straight back.
+
+What actually works is **subtracting the mean**. Centring `x` sends `mean(x)` to
+zero, which kills the off-diagonal term of the Hessian. The entanglement between
+`w` and `b` comes apart and the condition number falls from 55.8 to 1.2.
+Standardise as well and it is 1.0, a perfect circle. The value of normalising is
+in squaring up the axes, not in the scale.
+
+Momentum and Adam attack the same problem differently: they change the step
+rather than the landscape. Momentum accumulates steps along directions that keep
+their sign, so it travels further along the gentle axis; Adam divides each axis
+by its recent gradient magnitude, evening out the imbalance between axes. Adam
+does not remove the conditioning, though - it corrects per axis, so a landscape
+tilted off the coordinate axes keeps its elongation.
+
+## So
+
+- A loss surface can be drawn, and with two parameters it really can be
+- The learning-rate ceiling is `2 / lambda_max`, and the experiment agrees to
+  three decimal places
+- A good share of training that will not converge is not the algorithm but the
+  **elongation of the surface**
+
+The next part is the gradient itself. Above, `grad` was written by hand; with
+layers stacked that stops being possible. It follows backpropagation through a
+three-node graph by hand, then checks the result against numerical differences.
+
+By part nine one block of attention is complete: weights built from content,
+with position added so it knows about order. A real transformer does one more
+thing to that block. It **splits it into eight.**
+
+What the split buys is this part. Start with the strange bit.
+
+## Not one extra parameter
+
+Whether `d_model = 64` runs as one head or eight, the weight matrices are the
+same.
+
+```
+1 head  (dh=64)   Wq, Wk, Wv, Wo, each 64x64 = 4,096  |  16,384 for all four
+8 heads (dh=8)    Wq, Wk, Wv, Wo, each 64x64 = 4,096  |  16,384 for all four
+```
+
+Splitting means cutting the same `64` dimensions into eight slices of `8`, doing
+attention **separately** inside each slice, then stitching the results back
+together and multiplying by `Wo`. Same parameters, same multiplications. If
+anything comes for free, it comes from the structure.
+
+## One average cannot carry two things
+
+The crux is already in one sentence from part eight. Attention is a **weighted
+average**. One row is one probability distribution, and one distribution
+collapses the result to **a single point**.
+
+So what happens when a token needs two things at once - the value of the token
+sharing its topic, and the value of its immediate neighbour? Measure whether
+**both** can be read back out of the layer's output. The readout is the best
+linear map, and the tokens outnumber the value dimensions 1600 to 1 so that
+nothing fits by accident.
+
+```
+1 head, all on the partner (a=1.00)    relative error 0.7069
+1 head, split evenly       (a=0.50)    relative error 0.7075
+1 head, any ratio at all               best is 0.7069
+2 heads, one each                      relative error 0.0000
+```
+
+Recovering exactly half would score `sqrt(1/2) = 0.7071`. One head sits exactly
+there - **one of the two is lost entirely.**
+
+The middle row is the interesting one. Splitting the attention evenly feels like
+a compromise worth making, and it scores `0.7075`, which is **worse**. Blending
+ruins both: from the single point `0.5(v_partner + v_neighbour)` there is no way
+to pull `v_partner` and `v_neighbour` back apart.
+
+Sweeping the ratio from 0 to 1, the best move is to give everything to one side.
+For a single head, **compromise costs**. It has to choose.
+
+With two heads there is nothing to choose. Each takes one, and the results pass
+through different row blocks of `Wo` before being added, so they never mix. The
+error is `0.0000`.
+
+## Which is why heads look at different things
+
+Take part eight's six tokens, attach part nine's positional encoding, and hand
+the first four dimensions (content) and the last four (position) to different
+heads. They split like this.
+
+
+
+Head A is part eight unchanged: `0.510` to itself, `0.389` to its topic partner,
+and only `0.025` to the tokens beside it. Head B is the opposite: `0.797` to
+itself, `0.101` to each immediate neighbour, and `0.000` to the topic partner.
+
+B is tridiagonal. Neighbour `0.101`, two away `0.001`, three away `0.000` - two
+orders of magnitude per step. It does not look at content at all.
+
+The off-diagonal entries of the two matrices correlate at `-0.374`. Not merely
+different by chance: **where one head looks, the other looks less.**
+
+Here I chose which dimensions went to which head. A real model has `Wq` and `Wk`
+learn that. What the structure guarantees is only that there is **room** to look
+at several things separately; what gets looked at is up to training.
+
+## The second reason: a rank ceiling
+
+Splitting costs something too. One head's logit matrix is `Q_h K_h^T`, and since
+`Q_h` and `K_h` are `dh` wide, its **rank cannot exceed `dh`**.
+
+```
+1 head  (dh=64)        12 tokens, logits 12x12, rank 12
+one of 8 heads (dh=8)  12 tokens, logits 12x12, rank 8
+```
+
+To see whether that binds, ask for a high-rank pattern. "Look three places back"
+is a permutation matrix, rank `12`. Approximating it at rank `k` goes like this.
+
+```
+rank  2   relative error 0.9129   fraction of tokens correct 0.17
+rank  4   relative error 0.8165   fraction of tokens correct 0.33
+rank  8   relative error 0.5774   fraction of tokens correct 0.67
+rank 12   relative error 0.0000   fraction of tokens correct 1.00
+```
+
+The error is exactly `sqrt((n-k)/n)`. A permutation matrix has all its singular
+values equal, so every rank thrown away costs exactly `1/n`. The fraction
+correct is exactly `k/n`.
+
+So a head with `dh=8` **cannot in principle** express "three places back" across
+12 tokens. Eight of the twelve is the ceiling. The finer the split, the lower
+this ceiling goes.
+
+Eight is therefore a compromise. More heads means more things watched
+separately, and each one able to express a simpler pattern.
+
+## Concatenating is adding
+
+One implementation note to finish. The heads are usually described as
+concatenated and then multiplied by `Wo`, but slicing `Wo` by rows per head
+shows that this is the same as **summing each head's contribution**.
+
+```python
+concat = np.hstack(heads) @ Wo
+summed = sum(heads[h] @ Wo[h*dh:(h+1)*dh] for h in range(H))
+np.abs(concat - summed).max()        # 6.9e-17
+```
+
+Nothing but floating-point noise between them. The heads **never meet** inside
+attention. Each takes its own average, and at the end each adds its own result
+to the residual stream.
+
+The view is practical too. To see what one head does, keep its term and zero the
+others. That works precisely because it is a sum.
+
+## Honestly
+
+Nothing anywhere forces heads to do different jobs. The two above split because
+I handed them different dimensions, and in trained models there are steady
+reports that many heads end up similar enough to prune with little loss. The
+structure only **makes room**; whether the room gets used is another matter.
+
+## So
+
+- Splitting heads adds no parameters and no multiplications. The same four
+  `64x64` matrices, `16,384` in total
+- One attention is one weighted average. Needing two things loses one - relative
+  error `0.7069` against a theoretical `sqrt(1/2)`. Splitting evenly is worse at
+  `0.7075`
+- Two heads score `0.0000`, because they write to different places and are only
+  added at the end
+- The price is rank. A `dh=8` head can imitate a rank-12 pattern only up to 8,
+  with the fraction correct landing exactly on `k/n`
+- Concatenate-then-project equals sum-of-contributions, to `6.9e-17`
+
+Ten parts. Next time, the part sitting next to attention that nobody looks at -
+two thirds of the parameters live there and it is called, simply, feed-forward.
+
+Part four concluded that the initialisation is a precondition. Too small and the
+signal is `1e-16` after twenty layers; too large and the gradients differ by
+`1e9` across the depth. Only Xavier avoided both.
+
+Normalisation removes the precondition entirely. Add one line per layer and any
+initialisation arrives at the same place. Start with how same.
+
+## One line
+
+Right after multiplying by the weights and before the activation, subtract the
+mean and divide by the standard deviation.
+
+```python
+z = h @ W
+z = (z - z.mean(0)) / (z.std(0) + 1e-5)   # batch normalisation
+h = np.tanh(z)
+```
+
+`mean(0)` is the mean **along the batch**: the values one neuron produced across
+the 512 samples in the batch, and their mean and standard deviation. Layer
+normalisation, later, differs only here.
+
+Put that single line into part four's twenty-layer stack. One difference: the
+three initialisations here are redrawn to **share the same random numbers**, so
+that only the constant factor separates them - which is what makes normalisation
+collapsing them visible. That is why unnormalised Xavier reads `1.543e-01` here
+rather than the `1.62e-01` of part four's table.
+
+```
+initialisation   no normalisation (L20)    batch norm (L20)
+0.01                      1.135e-16             0.6310
+1.0                       9.742e-01             0.6310
+Xavier                    1.543e-01             0.6310
+```
+
+
+
+Three identical values to four decimals. Not a coincidence - it follows from the
+definition.
+
+First, what exactly is set to one. What gets normalised is **`z`, before the
+activation**. The layer's output `tanh(z)` is not 1 but `0.6310`, which is the
+number in the table. Every layer returns `z` to the same distribution, so the
+same value comes out each time.
+
+The reason all three agree is simpler still. Batch normalisation erases a
+positive scalar factor completely: `BN(cz) = BN(z)`. Not exactly, strictly
+speaking - the `eps` in the code above sits in the denominator as a constant, so
+feeding it `z` and `100z` leaves a difference of `4e-5`. Against an activation
+of `0.6310` that is 0.007%, too small to show up in the table; drop the `eps`
+and the difference is `5e-15`, pure floating-point noise. The initialisations 0.01,
+1.0 and Xavier are the same random numbers times different constants, so the
+moment normalisation is added **the three are the same network**. What part four
+called the base of the multiplication is reset at every layer - and this
+argument does not carry to initialisations that are not scalar multiples of each
+other, such as orthogonal initialisation.
+
+That is normalisation's real value. Before any speedup, **the initialisation
+stops being a hyperparameter**. Building twenty layers no longer involves
+fussing over scale.
+
+## Price 1: it depends on the batch
+
+Not free. The mean and standard deviation are **estimated from the batch**.
+Measure the layer-20 activation while varying only the batch size:
+
+```
+batch      batch norm     layer norm
+4            0.6756         0.6261
+8            0.6507         0.6339
+32           0.6346         0.6272
+256          0.6317         0.6287
+512          0.6310         0.6282
+```
+
+Batch normalisation drifts upward as the batch shrinks. Layer normalisation is
+flat, independent of the batch.
+
+It is easy to explain this as "a small batch underestimates the standard
+deviation, so dividing by it inflates the result". **That is wrong.**
+Normalisation divides a batch by that batch's own standard deviation, so the
+output has standard deviation exactly 1 at any batch size. Measured: `0.999983`
+at batch 4 and `0.999990` at batch 512, no difference. However far off the
+estimate is, dividing by it returns 1.
+
+The real cause is **shape**. Standardise `n` samples against themselves and no
+value can exceed `sqrt(n-1)`. At batch 4 that bound is `1.732`; at batch 512 it
+is `22.6`. The tails are clipped and the kurtosis changes from `2.99` at batch
+512 to `1.80` at batch 4 - not approximately but exactly `3(n-1)/(n+1)`, falling
+away from a normal distribution's `3` as the batch shrinks. `tanh` is a function that squashes large values - and
+at a small batch **there are no large values to squash**. So less is squashed and
+the standard deviation comes out higher.
+
+Two pieces of evidence. Swap the activation for a linear one and the batch
+dependence disappears completely: `1.0000` at both batch 4 and 512. And feeding
+exactly `N(0,1)` through normalisation plus `tanh` for **a single layer** already
+shows the whole gap, `0.6768` against `0.6281`. It is not something twenty layers
+built up.
+
+The estimator itself is still worth a look. The sample standard deviation is off
+in two ways.
+
+```
+batch   bias (how low on average)   spread (how much it moves per draw)
+2              -0.4363                        0.4253
+4              -0.2020                        0.3366
+8              -0.0979                        0.2449
+32             -0.0237                        0.1244
+256            -0.0030                        0.0440
+```
+
+The spread matches `1/sqrt(2*batch)`: predicted `0.1250` at batch 32, measured
+`0.1244`. The bias follows `-3/(4*batch)`. Both are leading-order approximations
+for a large batch, so the first row, batch 2, is off by 14 to 17 percent; from
+batch 8 they are within a few percent.
+
+The bias splits into two pieces. NumPy's `.std()` divides by `n` rather than
+`n-1`, which is `-1/(2n)`, and measuring the **square root** rather than the
+variance adds `-1/(4n)` through Jensen's inequality. Switching to `ddof=1` still
+leaves 3.5 percent at batch 8. Frameworks' BatchNorm uses the biased variance
+too, so this is not a NumPy quirk.
+
+What that estimation error does during training is not to change the scale but to
+**shake the value from batch to batch**. The regularising effect in the next
+section comes from there.
+
+## Price 2: training and inference diverge
+
+Using batch statistics means the same sample produces a different output
+**depending on which samples share its batch**. During training that wobble acts
+as a kind of regulariser and can help.
+
+Inference is the problem. A single sample has no batch. So batch normalisation
+accumulates running means and variances during training and uses those at
+inference. The training path and the inference path compute different things,
+and the gap shows when the batch is small or the two distributions differ.
+
+That is where layer normalisation comes from. It normalises along the **feature
+direction within one sample** instead of along the batch.
+
+```python
+z = (z - z.mean(1, keepdims=True)) / (z.std(1, keepdims=True) + 1e-5)
+```
+
+One axis changed and the properties change with it. It never looks at other
+samples, so it is independent of batch size, training and inference compute the
+same thing, and it works on data whose samples have different lengths. That is
+why transformers use it.
+
+## What remains
+
+Normalisation does not replace initialisation. The three initialisations above
+arrived at the same place, but that is the **scale** being equal; the directions
+the weights carry are still whatever the initialisation drew. And the
+normalisation layer has scale and shift parameters of its own, which have to be
+initialised too.
+
+## So
+
+- Normalisation resets the base of the multiplication at every layer. Three
+  initialisations landing on `0.6310` after twenty layers is the evidence
+- What it buys, before any speedup, is **the disappearance of sensitivity to the
+  initialisation**
+- Batch norm's output has variance 1 at any batch size. The rise at a small batch
+  is not estimator bias but self-standardisation clipping the tails at
+  `sqrt(batch-1)` - swap in a linear activation and the difference vanishes
+- The estimation error shows up as wobble between batches, not as scale. Bias
+  `-3/(4*batch)`, spread `1/sqrt(2*batch)`, both large-batch approximations
+- Layer norm never looks at the batch, so it avoids that. It normalises along a
+  different axis, which makes it a different thing, not a strictly better one
+
+The next part is about the difference between training well and **predicting
+well**. It drives the training loss to zero and measures what happens on data
+the model has not seen.
+
+Part eight ended on attention being permutation equivariant. Shuffle the inputs
+and the outputs shuffle identically; not one value changes. Attention has no
+"before" and no "after".
+
+In a sentence, order is meaning. So order has to be supplied separately. This
+part is about how.
+
+## Why the naive way fails
+
+The first idea is to write the position number in as one more dimension: append
+`i` to token `i`'s vector.
+
+It breaks immediately. An attention logit is a dot product, and a dot product
+carries the `i x j` term straight through.
+
+```
+positions 0-5     content spread 3.30   position spread  11.18   max prob 0.626
+positions 100-105 content spread 3.30   position spread 458.39   max prob 1.000
+```
+
+Content moves the logits by `3.30` while position moves them by `458`, and the
+ratio only widens further into the sentence. Part eight showed that large logits
+saturate the softmax; here the largest probability is `1.000`. **Attention stops
+looking at content at all.**
+
+That gives the requirement. Position information has to differ from place to
+place without **growing** as the place gets later.
+
+## Sinusoids
+
+The transformer's answer is periodic functions. Dimensions are taken in pairs,
+each pair carrying a sine and cosine at its own frequency.
+
+```python
+def PE(L, d):
+    pos = np.arange(L)[:, None]
+    i = np.arange(0, d, 2)[None, :]
+    w = 1.0 / (10000 ** (i / d))          # frequency, different per dimension
+    P = np.zeros((L, d))
+    P[:, 0::2] = np.sin(pos * w)
+    P[:, 1::2] = np.cos(pos * w)
+    return P
+```
+
+Take the guarantees one at a time. Everything below uses `d=64` and 512
+positions.
+
+**First, every position has the same size.** Each frequency contributes
+`sin² + cos² = 1`, so the norm is `sqrt(d/2)` no matter the position. Measured,
+that is `5.6569`, varying by `8.9e-16` across all 512 positions. This is exactly
+the condition the naive method broke.
+
+**Second, the dot product of two positions depends only on their distance.**
+`PE(i)·PE(j)` does not see `i` and `j` separately, only `i-j`. Measuring the
+spread of values along each diagonal gives `1.8e-13`, floating-point noise. The
+angle-addition identity explains it in one line.
+
+```
+PE(i)·PE(j) = Σ [sin(i·w) sin(j·w) + cos(i·w) cos(j·w)] = Σ cos((i-j)·w)
+```
+
+Comparing against `Σ cos(distance · w)` directly, the largest difference is
+`7.1e-15`. **Absolute positions go in and relative position comes out.** That is
+the real reason for choosing sinusoids.
+
+## Similarity does not decay with distance
+
+The usual next step is one claim too far: "so the dot product shrinks with
+distance, and nearby tokens end up more alike". Measured, it does not.
+
+
+
+At short range it holds - `32.00, 30.92, 28.30, 25.59, 23.93, 23.50`. Then at
+distance 6 it climbs back to `23.56`. Of the 511 steps, `244` go up rather than
+down. The minimum is `2.56` at distance `406`, and by distance 511 the value has
+risen again to `6.42`.
+
+Which is what a sum of periodic functions does. It oscillates; it is not a
+decaying function. What sinusoidal encoding buys is not "closer means more
+alike" but **the fact of being a function of distance at all**. What that
+function looks like against distance is a separate question, and as you can see,
+it is not pretty.
+
+## The real payoff: shifting is a linear map
+
+The value of choosing periodic functions lies elsewhere. Fix any gap `k` and
+there is a single fixed matrix `M_k`, **the same one for every position**, with
+`PE(pos + k) = M_k · PE(pos)`. Not a different matrix per position - one.
+
+Each frequency pair is `[sin(pos·w), cos(pos·w)]`, so shifting by `k` is a
+rotation through the angle `k·w`, and a rotation matrix does not depend on `pos`.
+
+Check it by measurement. Fitting 512 positions with 64 dimensions leaves
+**eight times more equations than unknowns**, so this cannot come out right by
+accident.
+
+```
+   k     sinusoidal    random embedding
+   1        4.9e-14              0.504
+   2        5.0e-14              0.489
+   5        4.8e-14              0.548
+  17        3.9e-14              0.501
+  50        1.6e-13              0.549
+```
+
+The sinusoidal residual is floating-point noise; a random embedding of the same
+size sits around `0.5` - a relative error of `0.898`, which is to say it fits
+nothing at all.
+
+The difference is practical. For attention to key on a relation like "three
+places back", the `W` that builds `Q` and `K` has to be able to express it, and
+what a `W` does is a linear transform. With sinusoids that relation **already
+exists as a linear map**, so it only has to be found. Handing each position its
+own arbitrary vector leaves no such map to find.
+
+None of this makes learned positional embeddings unusable. They are widely used
+and they learn a vector per position from data. The difference is that this
+structure has to be **learned rather than had for free**.
+
+## A bonus: beyond the trained length
+
+A sinusoid is a formula, so it has a value at any position. Train on 512 and
+position 4000 still has norm `5.6569`, and the dot product of 4000 with 4001 is
+`30.917` - exactly the value for positions 0 and 1. A learned embedding has
+nothing to hand back for a row that was never in its table.
+
+Having a value and working well there are different things, of course. Models do
+degrade past their trained length, which is why current ones reach for other
+schemes such as rotary encodings. What sinusoids guarantee stops at "defined".
+
+## It costs something
+
+Not free. Position is **added**, and what it adds it also blurs. Adding
+positional encoding to part eight's six tokens changes the first row like this.
+
+```
+              t0     t1     t2     t3     t4     t5
+no position  0.510  0.030  0.015  0.389  0.039  0.016
+with         0.610  0.213  0.020  0.140  0.012  0.004
+```
+
+`t0`'s topic partner is `t3`, and its share drops from `0.389` to `0.140`, while
+the immediate neighbour `t1` climbs from `0.030` to `0.213`. **Position competes
+with content.**
+
+Position won here, and what settles that contest is the ratio between the
+embedding's scale and the encoding's. Real models scale the embedding by
+`sqrt(d)` before adding, which tunes exactly that ratio.
+
+The goal is met all the same. Measure permutation equivariance again and it is
+broken.
+
+```python
+Z  = X + PE(6, d)          # position added in the original order
+Zp = X[perm] + PE(6, d)    # tokens shuffled, positions left where they are
+
+np.allclose(att(X[perm]), att(X)[perm])    # no position:   True
+np.allclose(att(Zp),      att(Z)[perm])    # with position: False
+```
+
+The point is that `PE` is **not** shuffled when building `Zp`. Shuffle the
+positions along with the tokens and `att(Z[perm])` is equivariant again - carry
+the seat number around with the passenger and nobody has changed seats.
+
+## So
+
+- To give attention order, each place must differ without later places growing
+  **larger**. Writing positions in as raw integers makes their logit
+  contribution `458` against content's `3.30` near position 100, burying the
+  content and pinning the largest probability at `1.000`
+- Sinusoids hold every position's norm at `5.6569` and make the dot product of
+  two positions a function of distance alone, `Σ cos(distance·w)`. Absolute
+  positions go in, relative position comes out
+- That function does **not** decay monotonically with distance. 244 of 511 steps
+  go up, and the minimum sits at distance 406
+- The real payoff is that shifting is a fixed linear map: residual `5e-14`
+  against `0.5` for a random embedding. It leaves relative position in a form a
+  `W` merely has to find
+- What is added also blurs. The topic partner's share falls from `0.389` to
+  `0.140`
+
+Nine parts. Next time the head gets split in several. If one attention produces
+one weighted average, the next question is what several of them look at
+separately - measured and drawn, as ever.
+
+The pieces are all in hand: attention, position, several heads, feed-forward.
+Now they get tied into a block and stacked. Tying them takes two lines, and
+those two lines are the difference between twenty layers and ninety-six.
+
+```python
+x = LN(x + Attn(x));   x = LN(x + FFN(x))     # Post-LN, the original paper
+x = x + Attn(LN(x));   x = x + FFN(LN(x))     # Pre-LN, the current default
+```
+
+The only difference is whether the norm sits **outside** or **inside** the
+residual. Do what part four did: stack them and measure the gradient at each
+layer. `d=128`, four heads, 4x expansion, PyTorch's default initialisation, in
+float64.
+
+## At twenty layers, nothing happens
+
+```
+             layer 1 grad   layer 20 grad   ratio (seed 0)   ratio (median of 6)
+Post-LN          1.78e-01        3.45e-01            0.516                 0.595
+Pre-LN           1.89e-01        1.15e-01            1.646                 1.618
+no residual      2.99e-01        9.86e-01            0.303                 0.360
+```
+
+All three sit inside a factor of three, removing the residual connections
+included, and changing the seed even reorders them - nothing next to the `1e9`
+spread part four got out of a bad initialisation.
+
+Part six says why. **Normalisation already resets the scale at every layer.**
+With an `LN` in place the forward pass does not die even without residuals. So
+a twenty-layer stack cannot tell these three apart.
+
+The depth has to go up.
+
+## Up to ninety-six
+
+The number below is the first layer's gradient divided by the last layer's. At
+`1` the two ends match; below it the early layers starve, above it the late
+ones do. Median of six seeds.
+
+```
+   L   Post-LN   Pre-LN   no residual
+   6     0.671     1.20         0.773
+  24     0.534     1.69         0.432
+  48     0.372     2.23         0.245
+  96     0.306     2.89         0.031
+```
+
+
+
+The three rows tell different stories.
+
+**Only the no-residual stack breaks.** From `0.773` to `0.031`: at ninety-six
+layers the first block receives a thirty-second of what the last one does. And it
+accelerates - it holds at `0.245` through forty-eight layers and falls away
+sharply after. An `LN` keeps the forward pass alive but does not keep the
+backward pass balanced across layers.
+
+**Post-LN and Pre-LN tilt in opposite directions.** Post-LN's `0.306` starves
+the early layers by 3.3x; Pre-LN's `2.89` starves the late ones by 2.9x. Both grow
+with depth, and both are still inside a factor of three at ninety-six layers.
+
+So **what carries depth is the residual connection, and where the norm goes is
+the dial that tilts the gradient one way or the other on top of it.** They are
+an order of magnitude apart.
+
+Post-LN starving its early layers is the reason learning-rate warmup is known to
+be necessary for it. Note though that what is measured here is only **the
+gradient profile at initialisation**. How it changes as training proceeds is a
+question this experiment does not answer.
+
+## The residual stream grows
+
+Pre-LN comes with one more property. Every block only ever **adds** to the
+stream, so the stream keeps growing.
+
+```
+   L   layer 1 sd   last sd   factor   sqrt(L)
+   6         1.04      1.21     1.17      2.45
+  24         1.03      1.91     1.85      4.90
+  96         1.04      3.59     3.46      9.80
+```
+
+The growth is usually quoted as `sqrt(L)`: add `L` independent things and the
+variance multiplies by `L`, so the standard deviation multiplies by `sqrt(L)`.
+Measured, it is `3.46`, not `9.80` - an exponent of `0.272`, about half of
+`0.5`.
+
+The premise does not hold. `sqrt(L)` is the calculation for terms **comparable
+in size** to the stream, and at default initialisation a sublayer's output is
+far smaller than the stream. Checking it is easy: scale up the initialisation of
+`Wo` and `W2`.
+
+```
+  output scale 1     factor  3.46   exponent 0.272
+  output scale 3     factor  9.21   exponent 0.487
+  output scale 10    factor 14.19   exponent 0.581
+```
+
+At three times the scale the exponent is `0.487`, right on `0.5`. **`sqrt(L)` is
+not wrong but conditional**, and at real initialisation the condition fails.
+
+The stream does grow all the same, which is why a Pre-LN network puts one more
+`LN` at the very end. The experiment above includes it. Without it the output
+leaves at whatever size the stream reached.
+
+## So
+
+- Twenty layers distinguish nothing. Normalisation resets the scale every layer,
+  so even a residual-free stack looks healthy
+- Ninety-six layers separate them. Without residuals the first layer's gradient
+  is `1/32` of the last's, and it turns sharp past forty-eight
+- Post-LN and Pre-LN tilt opposite ways, `0.306` against `2.89`. Opposite in
+  direction but both inside a factor of three - a different order of magnitude
+  from the residual's thirty-two
+- The Pre-LN stream grows, but not by `sqrt(L)`. Measured exponent `0.272`;
+  scale the sublayer outputs by three and it becomes `0.487`, matching the
+  calculation
+- What is measured is the gradient profile at initialisation. Training is a
+  separate question
+
+Twelve parts. Next time all of it runs at once. Having looked at the pieces and
+the wiring, the smallest thing that actually predicts characters gets built end
+to end.
+
+How long does it take to turn a `(3, 4)` array into a `(4, 3)` one? Twelve
+values to move, so about twelve operations. In fact **nothing moves at all**.
+To see why, look at how the array lies in memory.
+
+## There is no such thing as a multidimensional array
+
+Memory is one-dimensional. Addresses run 0, 1, 2 in a single line, and there is
+no way to lay a second dimension on top of that. A NumPy array is no exception.
+The values sit in one row, and "two-dimensional" is nothing but a rule for
+**what step size to read them at**.
+
+That step is called the stride.
+
+```python
+import numpy as np
+
+a = np.arange(12, dtype=np.int32)
+b = a.reshape(3, 4)
+
+print(a.strides)          # (4,)
+print(b.shape, b.strides) # (3, 4) (16, 4)
+print(np.shares_memory(a, b))
+```
+
+```
+(4,)
+(3, 4) (16, 4)
+True
+```
+
+An `int32` is 4 bytes. Strides of `(16, 4)` say: **to move down one row skip 16
+bytes, to move across one column skip 4**. Sixteen is 4 bytes times 4 columns.
+That is the whole of it. `reshape` touched no values. It wrote down two
+different numbers, which is why `shares_memory` is True.
+
+
+
+## Transposing swaps two numbers
+
+```python
+c = b.T
+print(c.shape, c.strides)          # (4, 3) (4, 16)
+print(np.shares_memory(a, c))      # True
+```
+
+```
+(4, 3) (4, 16)
+True
+```
+
+`(16, 4)` became `(4, 16)`. That is all. Leave the values alone and write down
+"4 to move along a row, 16 to move along a column", and the same memory reads
+as the transposed matrix. Transposing a million-by-million matrix costs exactly
+the same.
+
+Address arithmetic is one line.
+
+```
+offset = index[0]*stride[0] + index[1]*stride[1] + ...
+```
+
+Check it. The offset of `b[2, 1]` is `2x16 + 1x4 = 36` bytes, which divided by 4
+is slot 9 of the buffer.
+
+```python
+print(b[2, 1])                                    # 9
+print(2 * b.strides[0] + 1 * b.strides[1])        # 36
+```
+
+```
+9
+36
+```
+
+Indexing is two multiplications and an addition. Slicing is the same: `b[:, 1:3]`
+moves the starting offset and inherits the strides untouched.
+
+## When it is not free
+
+So far everything looks free. It is not. The moment something is asked for that
+strides cannot express, a copy happens.
+
+```python
+c = b.T                       # (4, 3), strides (4, 16)
+print(np.shares_memory(a, c.reshape(12)))
+print(np.shares_memory(a, c.ravel()))
+```
+
+```
+False
+False
+```
+
+Flattening `c` would have to produce `0, 4, 8, 1, 5, 9, ...`, and there is no
+**single constant step** that walks that order. So NumPy copies into a fresh
+buffer, and that is the one operation here that genuinely costs O(n).
+
+This is what that message in a deep-learning framework is about. In the same
+situation PyTorch refuses with `view size is not compatible with input tensor's
+size and stride`. `view` promises to do only what a stride change can do;
+`reshape` will fall back to copying. The two names exist because of performance.
+
+The difference between `ravel` and `flatten` is the same line: `ravel` returns a
+view where it can, `flatten` always copies. Above, `c` is non-contiguous, so
+both copied.
+
+## Broadcasting is a stride of zero
+
+One more. Stretching a `(2, 3)` array to `(4, 2, 3)` looks like it should cost
+four times the memory.
+
+```python
+e = np.arange(6, dtype=np.int32).reshape(2, 3)
+print(np.broadcast_to(e, (4, 2, 3)).strides)
+```
+
+```
+(0, 12, 4)
+```
+
+The first axis has stride **0**. "Moving one step along that axis leaves the
+address unchanged", so the same six values are read four times. No copy.
+Broadcasting is fast not because of a clever algorithm but because someone
+wrote down a zero.
+
+## So
+
+An array is not a grid of values. It is **one buffer plus a rule for reading
+it**. Hold that picture and the following are all the same story.
+
+- why `reshape`, `transpose` and slicing return instantly
+- why some operations refuse, complaining about contiguity
+- why one call to `.contiguous()` makes what follows faster
+- why broadcasting costs no memory
+
+The next part looks at loss rather than values. It draws the loss surface of a
+two-parameter problem and follows exactly what steps gradient descent takes
+across it.
+
+The first six parts were all about **how to bring the loss down**: the size of a
+step, the path a derivative takes, stacking layers, splitting data. This one
+turns the other way and asks what happens once the loss is all the way down.
+
+## Eighteen points, rising degree
+
+Take eighteen points from a curve and add noise. The noise has standard
+deviation `0.25`, so **the expected mean squared error on new data cannot go
+below `0.0625`**. Below that is the noise itself, which is not there to be
+fitted.
+
+```python
+f = lambda x: np.sin(1.6*x) + 0.35*x
+x_tr = np.sort(rng.uniform(-3, 3, 18))
+y_tr = f(x_tr) + 0.25 * rng.standard_normal(18)
+```
+
+The training error is not bounded by that floor. Training points are already
+seen, so their noise can be memorised, and in the table below the training error
+crosses `0.0625` from degree five on. That is the subject of this part.
+
+Raise the degree from 1 to 17 and measure the error on the eighteen training
+points and on 500 fresh ones. The fitting works like this: `x^17` is `1.3e8` at
+`x=3`, so the columns would differ in scale by eight orders of magnitude. Each
+power is centred and standardised against the training data before fitting, and
+the intercept is left out of the penalty.
+
+```python
+def design(x, deg, mu=None, sd=None):
+    A = np.vander(x, deg+1, increasing=True)[:, 1:]   # no constant column
+    if mu is None: mu, sd = A.mean(0), A.std(0) + 1e-12
+    return np.hstack([np.ones((len(x), 1)), (A - mu) / sd]), mu, sd
+
+def fit(deg, lam=0.0):
+    A, mu, sd = design(x_tr, deg)
+    if lam == 0:
+        c = np.linalg.lstsq(A, y_tr, rcond=None)[0]
+    else:
+        P = np.eye(A.shape[1]); P[0, 0] = 0            # intercept unpenalised
+        c = np.linalg.solve(A.T @ A + lam * P, A.T @ y_tr)
+    return c
+```
+
+Every "coefficient" in the tables below is a coefficient **in that standardised
+basis**. Change the basis and the numbers change, which comes up again later.
+
+```
+degree    training     validation    largest coefficient
+1         0.38697       0.7104              0.68
+3         0.08564       0.3343              1.73
+6         0.04163       0.0934              4.41
+8         0.01869       3.8295             57.08
+12        0.01721     587.0880              1144
+17        0.00000  38959385960            2.2e+07
+```
+
+
+
+## The two curves separate
+
+The training error goes all the way down. Of course it does: each added degree
+frees the curve further, and at degree 17 eighteen parameters pass through
+eighteen points, so it goes **exactly through them**. A training error of `3e-17`
+is floating-point zero.
+
+The validation error bottoms out at degree 6 with `0.0934`, respectably close to
+the noise floor of `0.0625`, and then turns. After that: `3.83` at degree 8,
+`587` at degree 12, `3.9e10` at degree 17. Squeezing the last `0.04` out of
+training cost twelve orders of magnitude on validation.
+
+The coefficients say what happened. Up to degree 6 the largest is `4.4`; at
+degree 17 it is `2.2e+07`. Passing exactly through eighteen points requires
+bending violently between them, and that bending explodes **between** the
+training points. On the training points the error is zero, so the training loss
+cannot see it.
+
+One caveat on those coefficients: they are numbers attached to a basis. On the
+raw monomial basis, measured with `np.polyfit`, the largest coefficient at degree
+17 is `455`, and degree 6's `1.67` is larger than degree 8's `1.36`. The same
+curve written in different coordinates changes both the number and the
+monotonicity. As an indicator of the blow-up it works; its absolute value means
+nothing.
+
+This is what overfitting is. The model did not learn the signal, it **memorised
+the coordinates of the noise**. The next sample has different noise, so what was
+memorised cannot fit it.
+
+## Lowering the degree is not the only answer
+
+The usual conclusion is "make the model smaller". Half right. Keep degree 17 and
+just price the coefficients: add `lambda * (sum of squared coefficients)` to the
+loss, which is the `lam` in `fit` above. The penalty applies to the
+**standardised** coefficients - ridge is not scale-invariant, and the same
+`lambda` on the raw monomial basis gives a completely different result (there,
+`lambda=0.01` scores `1.1e6` on validation).
+
+```
+degree 17 fixed    training    validation   largest coefficient
+lambda 0            0.00000  38959385960          2.2e+07
+lambda 1e-4         0.02105       3.4008            10.09
+lambda 1e-2         0.03354       0.1354             3.13
+lambda 0.1          0.06441       0.3578             1.77
+lambda 1.0          0.11434       0.7403             1.15
+```
+
+At `lambda = 0.01` the validation error is `0.1354`, close to the `0.0934` of the
+model whose degree was lowered to 6. **It is the same degree-17 model.** Its
+expressiveness was not reduced; a price was put on using it.
+
+The coefficient falling from `2.2e+07` to `3.13` is what that price did. A
+degree-17 curve is available, but bending it hard costs loss, so the optimiser
+picks a gentler one on its own.
+
+Too strong a penalty goes the other way. At `lambda = 1.0` even the training
+error rises to `0.114` and validation degrades to `0.74`. The signal has been
+squashed along with everything else.
+
+## What tells you when to stop
+
+The reason the validation error was knowable above is that 500 labelled points
+were held aside. In practice those 500 are the **validation set**.
+
+From which one rule follows. The training loss cannot tell you when to stop,
+because it goes all the way down. The stopping point can only be set by data
+that was not trained on. And the moment that data is used to choose
+hyperparameters it becomes a kind of training set, so the final number has to be
+measured on yet another split.
+
+## So
+
+- The training error keeps falling as parameters are added. It reaches zero.
+  That number is not performance
+- The validation error traces a U. Here it bottoms at degree 6, reaching `0.0934`
+  against a noise floor of `0.0625`
+- Overfitting is less a problem of expressiveness than of **unpriced
+  expressiveness**. Degree 17 with ridge at `0.01` comes back from `3.9e10` to
+  `0.1354`
+- A penalty is harmful in proportion to its strength. It squashes the signal too
+- Only data that was not trained on can answer when to stop
+
+Seven parts, one full circuit. It started where a tensor sits, went through steps
+and derivatives and layers and batches, and ends on the difference between
+predicting well and memorising well. Every one of them measured once, and drawn.
+
+Everything so far has been attention: building the weights, adding order,
+splitting the head. But a transformer block has one more thing beside it, and
+its name is just **feed-forward**.
+
+A short description is not a small component. Counting says the opposite.
+
+## Two thirds of the parameters
+
+Count one block, with `d_model = d` and an expansion factor of 4.
+
+```
+attention      Wq, Wk, Wv, Wo   4 x d^2   = 4d^2
+feed-forward   W1 (d->4d), W2 (4d->d)     = 8d^2
+total                                       12d^2
+```
+
+`8/12`, exactly `2/3`. At `d=512` that is `1,048,576` parameters for attention
+against `2,097,152` for the feed-forward. Ten parts have been spent on a third
+of the parameters.
+
+## This layer does not mix tokens
+
+What the feed-forward does is one line.
+
+```python
+FFN(x) = W2 @ relu(W1 @ x + b1) + b2
+```
+
+`x` is **one** token's vector. Feed a whole sentence and every row passes
+through on its own. Measured, that is exactly what happens.
+
+```python
+np.allclose(F(X), np.vstack([F(X[i:i+1]) for i in range(n)]))   # True
+np.allclose(F(X[perm]), F(X)[perm])                             # True
+```
+
+Part eight called permutation equivariance a problem for attention. For the
+feed-forward it is **correct**. Shuffle the places and the results should
+shuffle with them. Connecting tokens is attention's entire job; this layer
+computes inside each token and nowhere else.
+
+Reading a block that way is clean. **Attention moves, feed-forward processes.**
+
+## Without the nonlinearity, the expansion buys exactly nothing
+
+The layer widens `d` to `4d` and narrows back to `d`. Why widen? Without a
+nonlinearity the answer is **no reason at all**.
+
+Drop the `relu` and `W2(W1 x) = (W2 W1) x`, where `W2 W1` is a single `d x d`
+matrix whose rank cannot exceed `min(d, 4d) = d`.
+
+```
+W2 @ W1 is 64x64, rank 64  (ceiling min(64, 256) = 64)
+replaced exactly by one unexpanded 64x64: residual 3.3e-16
+```
+
+`32,768` parameters buying **the same family of functions** as `4,096`. The
+widened space is pure waste. It is part four's point about stacked linear layers
+collapsing into one, except here the waste shows up as an exact parameter count.
+
+So what this layer really is is not the expansion but **the nonlinearity sitting
+inside it**.
+
+## What width buys: pieces
+
+Then what exactly grows when you widen? A `relu` network is piecewise linear,
+and one neuron makes one kink. With a one-dimensional input, neuron `i` kinks at
+the single point `x = -b_i / w_i`. Width `m` gives at most `m` kinks and `m+1`
+pieces.
+
+Here is `sin(3x)` actually fitted at several widths.
+
+
+
+```
+   m     RMSE    kinks inside the interval
+   2   0.6221         2
+   4   0.2251         4
+   8   0.0989         7
+  16   0.0388        16
+  32   0.0250        31
+```
+
+Width 2 has two kinks and cannot imitate `sin` at all. Sixteen times the width
+takes the error from `0.6221` to `0.0250`. What grew is not expressive power in
+the abstract but **the number of straight pieces available to trace a curve**.
+
+The choice of `4d` reads out of this too. Wider means finer pieces, and
+parameters grow in proportion to width. Four is a conventional compromise
+between those, and plenty of models use 3 or 8/3 instead.
+
+## Reading it as keys and values
+
+One more framing. Call a row of `W1` a key `k_i` and a column of `W2` a value
+`v_i`, and the layer rewrites as
+
+```python
+FFN(x) = Σ relu(k_i · x + b_i) · v_i
+```
+
+`k_i · x` measures how well this token matches pattern `i`, and where it
+matches, that much of `v_i` is added. **Look up, then write.** As with part
+ten's heads, it is a sum.
+
+```python
+np.abs(F(X) - sum(np.outer(relu(X @ W1[i] + b1[i]), W2[:, i]) for i in range(m))).max()
+# 3.3e-16
+```
+
+Each of the `4d` neurons is one rule: "if this pattern, add this". That is where
+the reading of a large model's feed-forward as a memory store comes from.
+
+Measured at random initialisation, though, `0.5030` of the neurons fire for a
+given token. Half of them responding at once is hard to call one rule apiece.
+Clean separation is a result of training, not something the structure hands
+over.
+
+## So
+
+- `2/3` of a block's parameters are feed-forward. `4d^2` against `8d^2`
+- The layer does not mix tokens. Attention moves, this layer processes
+- Without a nonlinearity the 4x expansion is exactly pointless: `32,768`
+  parameters buying the same family as `4,096`, residual `3.3e-16`
+- What width buys is pieces. One neuron is one kink, width `m` gives `m+1`
+  pieces, and going from width 2 to 32 takes the error `0.6221` -> `0.0250`
+- The layer is exactly `Σ relu(k_i · x) v_i`. Look up, then write
+
+Eleven parts. Next time the blocks get stacked for real. The pieces have been
+examined one at a time; what remains is the order they have to be wired in for
+twenty layers to train at all.
+
+Part two computed the gradient from the whole dataset. There were four points,
+so that was fine. With a million, every step reads a million.
+
+A minibatch compromises on the spot: look at 32, estimate the gradient, step.
+The estimate is wrong, so the direction is wrong. And it arrives sooner. Here is
+the measurement of why.
+
+## How wrong is the estimate
+
+Start with the size of the noise: how far a batch gradient falls from the full
+one, averaged over 200 draws.
+
+```python
+g_full = grad(w, np.arange(n))
+err = np.linalg.norm(grad(w, idx) - g_full) / np.linalg.norm(g_full)
+```
+
+```
+batch 8     relative error 1.539
+batch 32    relative error 0.806
+batch 256   relative error 0.271
+batch 2048  relative error 0     (the whole set, so zero by definition)
+```
+
+Batch 8 may as well be pointing the wrong way: a relative error of 1.5 means the
+error is larger than the gradient. Growing the batch shrinks the error like its
+square root.
+
+The exact law is `sqrt(1/batch - 1/n)`. The familiar `1/sqrt(batch)` is its
+approximation for a batch much smaller than the whole set `n`. Here batch 256 is
+an eighth of the data, so the difference shows: the predicted ratios are `2.01`
+and `3.00` against measured `1.539/0.806 = 1.91` and `0.806/0.271 = 2.97`. Under
+`1/sqrt(batch)` alone the second would have to be `2.83`, and it is not. The
+zero at batch 2048 is the same formula's endpoint - draw everything and
+`1/n - 1/n = 0`.
+
+## Over one pass through the data
+
+What matters is **the unit of comparison**. Per step, the full batch wins, since
+each of its steps is exact. But a step does not cost the same on both sides: the
+full batch reads 2048 samples per step, batch 32 reads 32.
+
+Compare over the unit that costs the same on both sides, one pass over the data
+- an **epoch**. Steps per epoch: 1 for the full batch, 8 for batch 256, 64 for
+batch 32.
+
+The full batch was also given a learning rate of its own. Following part two, the
+Hessian's largest eigenvalue gives a ceiling of `0.844`, and 90% of that is
+`0.76`. Handing it the `0.02` used for the small batches would not be a fair
+comparison.
+
+
+
+```
+                       1 epoch    3 epochs   12 epochs   steps/epoch
+full batch, lr 0.02    19.5502    16.6655     8.1644          1
+full batch, lr 0.76     5.6670     0.9408     0.0931          1
+batch 256,  lr 0.02    11.1921     3.1969     0.1002          8
+batch 32,   lr 0.02     0.2211     0.0889     0.0887         64
+minimum                                       0.0885
+```
+
+Batch 32 **reaches the minimum in three epochs**. The full batch, even with its
+learning rate at the ceiling, takes twelve to get to 0.0931. In the time it
+takes to read the data three times, one is finished and the other is still ten
+times above.
+
+Sixty-four inexact steps beat one exact step. The noise was what bought the
+step count.
+
+## Why the noise is not fatal
+
+How the estimate is wrong matters. Draw the batch at random and the **expected
+value of its gradient equals the full gradient**. It is wrong, but not
+systematically wrong in one direction. The direction shakes step to step while
+still pointing downhill on average.
+
+The errors also cancel as steps accumulate. They are independent wobbles rather
+than a shared bias, so the accumulated error over sixty-four steps grows not
+sixty-fourfold but about `sqrt(64) = 8`. The forward progress accumulates in
+full.
+
+That accounting holds **while descending**. Far from the minimum the true
+gradient is large and the signal beats the noise; approaching it, the signal
+shrinks towards zero while the noise does not. From there, more steps buy
+nothing. Running the experiment above to 300 epochs, the distance to the minimum
+never improves on the `0.021` it had at epoch 3. Which is exactly the next
+section.
+
+## The price
+
+Not free.
+
+- **It does not stop at the minimum.** In the table batch 32 sits at `0.0887`
+  against a minimum of `0.0885`, and more steps only rattle around there. The
+  smaller the batch the higher that floor: batch 8 is still at `0.0917` after 12
+  epochs. This is why learning-rate schedules decay towards the end
+- **A larger batch buys fewer steps.** Matching the result with a bigger batch
+  means raising the learning rate, and part two's ceiling stops that
+- **Hardware moves the goalposts.** The comparison above priced a step by the
+  samples it reads, but on a GPU batch 256 does not take eight times as long as
+  batch 32. While the device is idle, growing the batch barely lengthens the
+  step, so the **per-sample cost** falls. That is why practice runs larger
+  batches than the theory suggests - until the device saturates and time starts
+  scaling with the batch again
+
+## So
+
+- A minibatch gradient wobbles without bias. Wrong direction, right average
+- Compare by epoch rather than by step and many inexact steps beat one exact
+  one: three epochs against twelve, on this data
+- The noise leaves a floor near the minimum, which is where learning-rate
+  schedules come from
+- Batch size is a dial trading accuracy against step count, not a number that
+  should be as large as possible
+
+Five parts in. Where a tensor sits, how big a step is, how the derivative flows,
+what stacking layers does to that product, and what splitting the data costs.
+Every one measured and drawn once.

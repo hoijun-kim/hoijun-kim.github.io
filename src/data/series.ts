@@ -20,6 +20,13 @@ export const series: Record<string, Series> = {
     audience: "파이썬과 NumPy 를 읽을 수 있으면 충분하다. 미적분은 필요한 만큼만 그 자리에서 짚는다.",
     lang: "ko",
   },
+  "after-training": {
+    name: "훈련이 끝난 뒤",
+    description:
+      "학습이 끝난 모델을 실제로 돌릴 때 붙는 것들을 잰다. 다음 글자를 고르는 규칙, 두 번 계산하지 않는 법, 정밀도를 버리고 남는 것 - 앞 시리즈에서 만든 모델을 그대로 쓴다.",
+    audience: "앞 시리즈 '보이는 딥러닝' 을 읽었거나, 트랜스포머가 무엇을 계산하는지 알면 된다.",
+    lang: "ko",
+  },
 };
 
 export const seriesOf = (id: string): Series | undefined => series[id];
