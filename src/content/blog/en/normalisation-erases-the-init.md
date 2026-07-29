@@ -31,8 +31,11 @@ h = np.tanh(z)
 the 512 samples in the batch, and their mean and standard deviation. Layer
 normalisation, later, differs only here.
 
-Put that single line into part four's twenty-layer stack and run the same three
-initialisations.
+Put that single line into part four's twenty-layer stack. One difference: the
+three initialisations here are redrawn to **share the same random numbers**, so
+that only the constant factor separates them - which is what makes normalisation
+collapsing them visible. That is why unnormalised Xavier reads `1.543e-01` here
+rather than the `1.62e-01` of part four's table.
 
 ```
 initialisation   no normalisation (L20)    batch norm (L20)
@@ -93,8 +96,11 @@ number in the table. Every layer returns `z` to the same distribution, so the
 same value comes out each time.
 
 The reason all three agree is simpler still. Batch normalisation erases a
-positive scalar factor completely: `BN(cz) = BN(z)`, and feeding it `z` and
-`100z` differs by `6e-15`, pure floating-point noise. The initialisations 0.01,
+positive scalar factor completely: `BN(cz) = BN(z)`. Not exactly, strictly
+speaking - the `eps` in the code above sits in the denominator as a constant, so
+feeding it `z` and `100z` leaves a difference of `4e-5`. Against an activation
+of `0.6310` that is 0.007%, too small to show up in the table; drop the `eps`
+and the difference is `5e-15`, pure floating-point noise. The initialisations 0.01,
 1.0 and Xavier are the same random numbers times different constants, so the
 moment normalisation is added **the three are the same network**. What part four
 called the base of the multiplication is reset at every layer - and this
@@ -131,8 +137,9 @@ estimate is, dividing by it returns 1.
 
 The real cause is **shape**. Standardise `n` samples against themselves and no
 value can exceed `sqrt(n-1)`. At batch 4 that bound is `1.732`; at batch 512 it
-is `22.6`. The tails are clipped and the kurtosis changes from `3.003` at batch
-512 to `1.835` at batch 4. `tanh` is a function that squashes large values - and
+is `22.6`. The tails are clipped and the kurtosis changes from `2.99` at batch
+512 to `1.80` at batch 4 - not approximately but exactly `3(n-1)/(n+1)`, falling
+away from a normal distribution's `3` as the batch shrinks. `tanh` is a function that squashes large values - and
 at a small batch **there are no large values to squash**. So less is squashed and
 the standard deviation comes out higher.
 

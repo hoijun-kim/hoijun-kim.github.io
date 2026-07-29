@@ -101,7 +101,7 @@ are packed near zero, so the derivative `1 - h^2` is 0.9755 at layer 1 and
 can be.**
 
 The culprit is the weight scale. `0.01 x sqrt(256) = 0.16` is the per-layer
-factor, and the forward signal shrinks by a measured 0.159 per layer. The
+factor, and the forward signal shrinks by a measured 0.160 per layer. The
 backward signal shrinks by the same 0.16 travelling the other way. Because both
 directions decay at the same rate, every layer's weight gradient is
 `|input| x |backward signal|`, which lands on `0.16^20` regardless of the layer.
@@ -170,7 +170,7 @@ Residual connections work differently. A block is `h + f(h)`, so the Jacobian is
 `I + J` and an **identity path that skips the multiplication** always survives
 on the way back. It does not pin the product at one; it opens a route around it.
 On its own it makes the forward scale grow - measured, the activation standard
-deviation climbs from 1.18 to 3.76 over twenty blocks. That is why real residual
+deviation climbs from 1.2 to 3.8 over twenty blocks. That is why real residual
 networks pair it with normalisation or scale the branch by `1/sqrt(L)`.
 
 The next part shakes the data instead of the network. It measures why taking a
