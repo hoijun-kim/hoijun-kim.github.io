@@ -7,7 +7,6 @@ kind: guide
 series:
   id: seeing-deep-learning
   part: 2
-draft: true
 ---
 
 학습률은 보통 이렇게 배운다. 너무 작으면 느리고, 너무 크면 발산한다. 맞는

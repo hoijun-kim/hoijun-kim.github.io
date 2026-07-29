@@ -7,7 +7,6 @@ kind: guide
 series:
   id: seeing-deep-learning
   part: 3
-draft: true
 ---
 
 앞 편에서는 기울기를 손으로 적었다. 파라미터가 둘이고 식이 한 줄이라 가능했다.

@@ -7,7 +7,6 @@ kind: guide
 series:
   id: seeing-deep-learning
   part: 1
-draft: true
 ---
 
 `(3, 4)` 짜리 배열을 `(4, 3)` 으로 바꾸는 데 얼마나 걸릴까. 12개를 옮겨 담아야
