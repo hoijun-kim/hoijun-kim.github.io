@@ -1,6 +1,6 @@
 ---
-title: "Waste cut 4.5-fold, time not cut at all"
-description: "Part five measured 50% padding waste and left the remedy unmeasured. Sorting by length takes the waste from 46% to 10%. The time does not follow, and why comes out of only half a step depending on length."
+title: "Padding waste was never about the batch"
+description: "Part five measured padding waste converging on 50% once request lengths spread out. That number rested on taking requests in the order they arrive. Allow reordering and what sets the waste is not the batch size but how many are pooled."
 date: 2025-10-20
 lang: en
 kind: guide
@@ -9,19 +9,21 @@ series:
   part: 9
 ---
 
-Part five left something open. Requests of different lengths in a batch must be
-padded to the longest, and with lengths spread out the waste converges on `50%` -
-that much was measured. The remedies were named and not measured. This part is
-that.
+Part five reported that padding waste converges on `50%` once request lengths
+spread out, because the maximum inside a batch pins to the ceiling as the batch
+grows. The remedies got named and left unmeasured.
 
-## Grouping by length
+That number carried an unstated premise: **requests are taken in the order they
+arrive.** Allow them to be reordered and the question changes.
 
-The simplest remedy is to **put similar lengths together**. Draw 256 requests with
-context lengths uniform from 1 to 128, and count the waste when grouped in arrival
-order against grouped after sorting by length.
+## Not the batch, the pool
+
+Fix the batch at `32` and vary only **how many requests are collected before
+grouping**. Lengths are uniform from 1 to 128; the pool is sorted by length and
+then cut into groups of 32 from the front.
 
 <figure class="fig">
-<svg viewBox="0 0 460 272" role="img" aria-label="Padding waste against batch size. Grouped in arrival order it sits near 47% regardless; sorted by length it falls as the batch shrinks">
+<svg viewBox="0 0 460 272" role="img" aria-label="Padding waste against how many requests are pooled. In arrival order it does not move from 47%; sorted, it approaches zero as the pool grows">
 <g class="axis">
 <line x1="58" y1="206.0" x2="446" y2="206.0"/>
 <text class="tick-lbl" x="49" y="209.5" text-anchor="end">0%</text>
@@ -37,59 +39,78 @@ order against grouped after sorting by length.
 <text class="tick-lbl" x="49" y="42.2" text-anchor="end">50%</text>
 <line class="frame" x1="58" y1="32" x2="58" y2="206"/><line class="frame" x1="58" y1="206" x2="446" y2="206"/>
 <line class="frame" x1="58.0" y1="206" x2="58.0" y2="210"/>
-<text class="tick-lbl" x="58.0" y="222" text-anchor="middle">8</text>
-<line class="frame" x1="155.0" y1="206" x2="155.0" y2="210"/>
-<text class="tick-lbl" x="155.0" y="222" text-anchor="middle">16</text>
-<line class="frame" x1="252.0" y1="206" x2="252.0" y2="210"/>
-<text class="tick-lbl" x="252.0" y="222" text-anchor="middle">32</text>
-<line class="frame" x1="349.0" y1="206" x2="349.0" y2="210"/>
-<text class="tick-lbl" x="349.0" y="222" text-anchor="middle">64</text>
+<text class="tick-lbl" x="58.0" y="222" text-anchor="middle">32</text>
+<line class="frame" x1="168.9" y1="206" x2="168.9" y2="210"/>
+<text class="tick-lbl" x="168.9" y="222" text-anchor="middle">128</text>
+<line class="frame" x1="279.7" y1="206" x2="279.7" y2="210"/>
+<text class="tick-lbl" x="279.7" y="222" text-anchor="middle">512</text>
 <line class="frame" x1="446.0" y1="206" x2="446.0" y2="210"/>
-<text class="tick-lbl" x="446.0" y="222" text-anchor="middle">128</text>
-<text class="tick-lbl" x="252.0" y="266" text-anchor="middle">batch size</text>
+<text class="tick-lbl" x="446.0" y="222" text-anchor="middle">4096</text>
+<text class="tick-lbl" x="252.0" y="266" text-anchor="middle">requests pooled (batch fixed at 32)</text>
 <text class="tick-lbl" x="58" y="16" text-anchor="start">padding waste</text></g>
-<path class="curve bad" fill="none" d="M58.0,64.3 L155.0,56.3 L252.0,50.7 L349.0,48.2 L446.0,47.2"/>
-<path class="curve ok" fill="none" d="M58.0,197.1 L155.0,188.0 L252.0,171.9 L349.0,143.3 L446.0,101.0"/>
-<circle cx="58.0" cy="64.3" r="2.6" style="fill:var(--ink-2)"/>
-<circle class="mark" cx="58.0" cy="197.1" r="2.6"/>
-<circle cx="155.0" cy="56.3" r="2.6" style="fill:var(--ink-2)"/>
-<circle class="mark" cx="155.0" cy="188.0" r="2.6"/>
-<circle cx="252.0" cy="50.7" r="2.6" style="fill:var(--ink-2)"/>
-<circle class="mark" cx="252.0" cy="171.9" r="2.6"/>
-<circle cx="349.0" cy="48.2" r="2.6" style="fill:var(--ink-2)"/>
-<circle class="mark" cx="349.0" cy="143.3" r="2.6"/>
-<circle cx="446.0" cy="47.2" r="2.6" style="fill:var(--ink-2)"/>
-<circle class="mark" cx="446.0" cy="101.0" r="2.6"/>
-<text class="lbl bad" x="211.7" y="38.7" text-anchor="middle">grouped in arrival order</text>
-<text class="lbl ok" x="211.7" y="129.0" text-anchor="middle">sorted by length first</text>
+<path class="curve bad" fill="none" d="M58.0,47.5 L113.4,45.3 L168.9,49.5 L224.3,50.0 L279.7,47.6 L335.1,46.6 L446.0,45.6"/>
+<path class="curve ok" fill="none" d="M58.0,47.5 L113.4,98.4 L168.9,143.5 L224.3,171.2 L279.7,187.5 L335.1,196.3 L446.0,203.5"/>
+<circle cx="58.0" cy="47.5" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="58.0" cy="47.5" r="2.6"/>
+<circle cx="113.4" cy="45.3" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="113.4" cy="98.4" r="2.6"/>
+<circle cx="168.9" cy="49.5" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="168.9" cy="143.5" r="2.6"/>
+<circle cx="224.3" cy="50.0" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="224.3" cy="171.2" r="2.6"/>
+<circle cx="279.7" cy="47.6" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="279.7" cy="187.5" r="2.6"/>
+<circle cx="335.1" cy="46.6" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="335.1" cy="196.3" r="2.6"/>
+<circle cx="446.0" cy="45.6" r="2.6" style="fill:var(--ink-2)"/>
+<circle class="mark" cx="446.0" cy="203.5" r="2.6"/>
+<text class="lbl bad" x="260.0" y="38.0" text-anchor="middle">arrival order</text>
+<text class="lbl ok" x="304.7" y="205.5" text-anchor="middle">sorted by length</text>
 </svg>
-<figcaption>Padding waste against batch size. Grouped in arrival order it sits near 47% almost regardless of batch, while sorting by length first takes it to 2.7% at batch 8. The larger the batch, the wider the spread of lengths inside a sorted group, so the gain shrinks.</figcaption>
+<figcaption>Padding waste with the batch fixed at 32 and only the number of pooled requests changing. In arrival order it does not move from 47% however many arrive; sorted by length it goes from 47.4% at 32 requests to 0.7% at 4096. The batch is the same throughout.</figcaption>
 </figure>
 
 ```
-batch    waste (arrival order)   waste (sorted by length)
-    8                    42.4%                       2.7%
-   16                    44.7%                       5.4%
-   32                    46.4%                      10.2%
-   64                    47.2%                      18.7%
-  128                    47.5%                      31.4%
+pooled   groups   waste (sorted)   waste (arrival)
+    32        1            47.4%            47.4%
+    64        2            32.2%            48.0%
+   128        4            18.7%            46.8%
+   256        8            10.4%            46.6%
+   512       16             5.5%            47.3%
+  1024       32             2.9%            47.6%
+  4096      128             0.7%            47.9%
 ```
 
-Arrival order sits near `47%` almost regardless of batch, because the maximum of
-32 random draws is already close to the ceiling.
+The batch is `32` throughout. All that changes is how many were waiting in front
+of it, and the waste goes from `47.4%` to `0.7%`.
 
-Sorting takes it to `2.7%` at batch 8. But **the gain shrinks as the batch grows**:
-put 128 in a group and even sorted it holds lengths from 1 to 128 together,
-leaving `31.4%`. Sorting works when the groups are small.
+With one group, sorting achieves nothing: sort 32 requests into one group of 32
+and only the order changes, not the maximum. At two groups the long ones start
+separating from the short ones, and at 128 groups the spread of lengths inside a
+group narrows to about one.
 
-At batch 32 the waste goes from `46.4%` to `10.2%` - **cut 4.5-fold.**
+Arrival order does not move from `47%` however many requests turn up. The maximum
+of 32 random draws is near the ceiling regardless of how many you drew from.
 
-## And the time does not follow
+**Part five's `50%` was not a property of batching but the consequence of
+declining to reorder.**
 
-Cutting waste 4.5-fold ought to cut the time similarly. It does not, because
-**padding only touches part of a step.**
+## The price is paid in waiting
 
-Fixing the batch at 32 and varying only the cache length:
+Not free. Pooling 4096 requests means waiting for 4096 requests. The first to
+arrive stands in the queue until others of similar length show up, and that time
+becomes latency.
+
+It is part five's throughput-against-latency trade with a different dial. There,
+batch size bought latency; here, **waiting buys waste** - with the batch held at
+`32` the whole time.
+
+## Removing all the waste halves nothing
+
+One more thing has to be measured. If the waste falls from `47%` to `0.7%`, does
+the time follow? No.
+
+Holding the batch at 32 and varying only the cache length:
 
 ```
 cache length   time (us)
@@ -100,72 +121,42 @@ cache length   time (us)
          128        1398
 ```
 
-Going from `1` to `128` adds `675 us`, so `48.3%` of a step depends on length and
-the other `51.7%` does not. The linear layers push one token through regardless of
-how long the cache is, and part five's fixed overhead `a` is unchanged. **Only
-attention scales with length.**
+Going from `1` to `128` adds `675 us`. So `48.3%` of a step depends on length and
+`51.7%` does not: the linear layers push one token through no matter how long the
+cache is, and part five's fixed overhead `a` is unchanged. **Padding attaches to
+attention and nowhere else.**
 
-Which makes the expected gain calculable:
+So for 256 requests at batch 32, taking the waste from `46.4%` to `10.2%`
+predicts a time gain of `1.24`. What was removed was `40%` of the half of a step
+that depends on length at all.
 
-```
-batch    mean padded length    predicted
-    8            117 ->  69         1.24
-   16            122 ->  71         1.25
-   32            126 ->  75         1.24
-   64            127 ->  83         1.20
-  128            128 ->  98         1.13
-```
+Confirming that `1.24` by measurement does not resolve on this laptop.
+Alternating arrival order and sorted, seven paired ratios, the median at batch 32
+is `1.36` with a range of `0.87-1.68`, and at most batch sizes the range straddles
+`1.0`. The first single run gave `1.22`, agreeing with the prediction nicely;
+re-measuring the same configuration gave `0.91`. A number that agreed once is not
+a result. The waste figures reproduce exactly given the list of lengths, which is
+where these tables rest.
 
-Cutting waste `4.5`-fold buys `1.24` in time, because what was cut was `40%` of
-the half of a step that depends on length at all.
+## What is left
 
-## The measurement cannot confirm it
+Sorting is a one-shot arrangement. Requests finish at different times, so a short
+one's seat stays empty until the long ones are done. Filling it immediately is
+continuous batching, and this experiment did not go there.
 
-Something has to be said plainly here. Confirming that prediction by measurement
-**does not resolve on this machine.**
-
-Running arrival order and sorted alternately, taking a ratio per pair, median of
-seven pairs:
-
-```
-batch    predicted    measured median    range
-    8         1.24               1.08    0.73-1.30
-   16         1.25               0.96    0.85-1.32
-   32         1.24               1.36    0.87-1.68
-   64         1.20               1.57    0.83-2.01
-  128         1.13               0.98    0.91-1.14
-```
-
-Most of those ranges straddle `1.0`. A predicted `1.2` sits inside this laptop's
-load wobble, so it is **neither confirmed nor refuted.** The first single run gave
-`1.22`, agreeing with the prediction nicely; measuring the same configuration
-again gave `0.91`. A number that agreed once is not a result.
-
-The waste column has none of this problem. Given the list of lengths it is exactly
-reproducible, so the first two columns can be trusted.
-
-## What sorting cannot fix
-
-Sorting has a price: to sort requests you have to **hold them and wait**. An early
-request waits for others of similar length, and the latency grows by that much.
-Part five's throughput-against-latency trade returns here.
-
-And sorting is a one-shot arrangement. In real serving, requests finish at
-different times, so a short one's seat sits empty until the long ones are done.
-Slotting a new request into that seat immediately is continuous batching, and this
-experiment did not measure it.
+The lengths used here are uniform from 1 to 128. Real request lengths bunch at the
+short end with a long tail, where arrival-order waste would be higher and sorting
+would gain more - unmeasured.
 
 ## So
 
-- Sorting by length before grouping cuts padding waste from `46.4%` to `10.2%` at
-  batch 32, a factor of `4.5`
-- It works best on small groups: `2.7%` at batch 8, still `31.4%` at batch 128
-- The time does not follow. Only `48.3%` of a step depends on length, so the
-  predicted gain is around `1.2`
-- Even that `1.2` does not resolve on this machine; the ranges straddle `1.0`
-- Sorting means holding requests and waiting, which costs latency
-- The waste figures are deterministic and the timings are not. This part's
-  conclusion rests on the former
-
-Nine parts. This one set out to fill the hole part five left, and filling it
-turned out to show the hole was smaller than it looked.
+- `50%` was not a property of batching. It followed from declining to reorder
+- Holding the batch at `32` and growing the pool from `32` to `4096` takes the
+  waste from `47.4%` to `0.7%`
+- With one group sorting does nothing. It needs somewhere to separate things into
+- Arrival order sits at `47%` however many arrive; the maximum of 32 draws is
+  always near the ceiling
+- The price is waiting. Part five bought latency with batch size; this buys waste
+  with pooling
+- Removing the waste does not halve the time. Only `48.3%` of a step depends on
+  length
