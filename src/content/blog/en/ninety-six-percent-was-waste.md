@@ -200,4 +200,7 @@ bends `b` upward. Summarising as two linear terms is an approximation, and
 
 Five parts: the rule for choosing, how not to compute twice, the price of
 throwing away precision, the price of writing ahead, and the price of handling
-many at once. The gap part two could not explain now has its two terms.
+many at once.
+
+Next time takes up the other problem part two left behind. The cache outgrew the
+weights, so what breaks when the oldest entries get thrown away.
