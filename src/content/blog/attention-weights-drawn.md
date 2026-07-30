@@ -121,7 +121,7 @@ out = A @ X                           # 그 가중치로 만든 가중평균
 <text class="v off" x="331.5" y="381.5">0.045</text>
 <rect x="362" y="350" width="55" height="55" rx="4" style="opacity:0.765"/>
 <text class="v on" x="389.5" y="381.5">0.391</text>
-</g><g class="lbl-ax">
+</g><rect class="scan" x="70" y="58" width="349" height="59" rx="6" style="--scan-travel: 290px"/><g class="lbl-ax">
 <text x="99.5" y="46">t0</text>
 <text x="157.5" y="46">t1</text>
 <text x="215.5" y="46">t2</text>

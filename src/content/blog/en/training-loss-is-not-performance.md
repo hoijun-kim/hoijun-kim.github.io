@@ -184,6 +184,10 @@ measured on yet another split.
 - A penalty is harmful in proportion to its strength. It squashes the signal too
 - Only data that was not trained on can answer when to stop
 
-Seven parts, one full circuit. It started where a tensor sits, went through steps
-and derivatives and layers and batches, and ends on the difference between
-predicting well and memorising well. Every one of them measured once, and drawn.
+Seven parts. It started where a tensor sits, went through steps and derivatives
+and layers and batches, and reached the difference between predicting well and
+memorising well.
+
+That was the story of stacking layers. From here the series looks at a layer with
+a different shape - one whose weights are not learned constants but **computed
+from the input every time**.
