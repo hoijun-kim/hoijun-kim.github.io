@@ -159,6 +159,6 @@ leaves at whatever size the stream reached.
 - What is measured is the gradient profile at initialisation. Training is a
   separate question
 
-Twelve parts. Next time all of it runs at once. Having looked at the pieces and
+Next time all of it runs at once. Having looked at the pieces and
 the wiring, the smallest thing that actually predicts characters gets built end
 to end.

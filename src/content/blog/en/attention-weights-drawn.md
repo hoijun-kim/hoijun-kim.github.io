@@ -9,6 +9,7 @@ series:
   part: 8
 ---
 
+
 The first seven parts were about stacking layers and measuring steps. This one
 looks at a layer with a different shape. Attention is, in the end, a **weighted
 average**; what is unusual is that the weights are not learned constants but
@@ -271,10 +272,6 @@ without it the model has no way at all to see word order.
   factor of 16.5
 - Attention knows nothing about order. Positional encoding is not decoration, it
   supplies information that is otherwise absent
-
-Eight parts. From where a tensor sits, through steps, derivatives, layers,
-batches, normalisation and generalisation, to a layer that computes its own
-weights. Measured and drawn, every time.
 
 The next part fills the hole just left open. If attention does not know about
 order, how does order get in? Positional encoding, measured.

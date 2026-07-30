@@ -9,6 +9,7 @@ series:
   part: 7
 ---
 
+
 The first six parts were all about **how to bring the loss down**: the size of a
 step, the path a derivative takes, stacking layers, splitting data. This one
 turns the other way and asks what happens once the loss is all the way down.
@@ -183,10 +184,6 @@ measured on yet another split.
   `0.1354`
 - A penalty is harmful in proportion to its strength. It squashes the signal too
 - Only data that was not trained on can answer when to stop
-
-Seven parts. It started where a tensor sits, went through steps and derivatives
-and layers and batches, and reached the difference between predicting well and
-memorising well.
 
 That was the story of stacking layers. From here the series looks at a layer with
 a different shape - one whose weights are not learned constants but **computed

@@ -9,6 +9,7 @@ series:
   part: 6
 ---
 
+
 Part two ended with the cache bigger than the weights: `3.00 MB` against `2.43 MB`
 at `n=1024`, and `4.0 GB` at real scale. The longer the context, the further that
 number climbs.
@@ -183,10 +184,6 @@ model**.
 - Attention mass does not explain it. There is no sink in this model, and the
   first four receive half the mass the middle four do
 - Why it works was not measured. Only that it is position, and that it is not mass
-
-Six parts: the rule for choosing, how not to compute twice, the price of throwing
-away precision, the price of writing ahead, the price of handling many at once,
-and the price of choosing what to discard.
 
 Next time measures a time nobody has measured yet in this series. Everything so
 far has been the cost of producing characters; before that comes reading the

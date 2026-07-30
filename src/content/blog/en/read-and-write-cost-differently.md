@@ -9,6 +9,7 @@ series:
   part: 7
 ---
 
+
 Two kinds of time have been measured so far: part two timed producing characters
 one at a time, part five split that step by batch. One is still missing - **the
 time to read the prompt**.
@@ -160,11 +161,6 @@ grows as `P²`, so large `P` bends away from the line - and indeed going from
   structurally batch 1
 - All three tables use one estimator. Mixing them makes `P=32` look dearer than
   `P=128`
-
-Seven parts: the rule for choosing, how not to compute twice, the price of
-throwing away precision, the price of writing ahead, the price of handling many
-at once, the price of choosing what to discard, and the price of reading against
-writing.
 
 Next time goes back to part three. There the weights got coarser; this time they
 get removed, and the two are compared at equal compression.

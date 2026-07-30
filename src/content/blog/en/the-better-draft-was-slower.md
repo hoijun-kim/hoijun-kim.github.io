@@ -9,6 +9,7 @@ series:
   part: 4
 ---
 
+
 In part two, every character required one pass through the target model. Adding a
 cache does nothing about that: **the number of passes still equals the number of
 characters.**
@@ -227,9 +228,6 @@ on the clock.
   `c = 0.004`
 - What sets the sign is not acceptance but the draft's cost:
   `(chars per pass) / (1 + k·c)`
-
-Four parts: the rule for choosing, how not to compute twice, the price of
-throwing away precision, and the price of writing ahead.
 
 Next time returns to the gap part two could not explain. If overhead is what is
 being paid for, how large is that share exactly - and is there a way to take it

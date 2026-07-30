@@ -390,5 +390,5 @@ structure only **makes room**; whether the room gets used is another matter.
   `1 - sqrt(1 - dh/n)`. Where to look needs rank 2
 - Concatenate-then-project equals sum-of-contributions, to `6.9e-17`
 
-Ten parts. Next time, the part sitting next to attention that nobody looks at -
+Next time, the part sitting next to attention that nobody looks at -
 two thirds of the parameters live there and it is called, simply, feed-forward.

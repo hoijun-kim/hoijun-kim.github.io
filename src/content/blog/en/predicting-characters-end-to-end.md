@@ -219,7 +219,17 @@ between `0.20` and `0.34`. Only block 0's head 2 is sharp.
 - Heads can specialise without being forced to. Block 0 head 2 puts `0.879` on
   the previous character while the other three in its block idle near uniform
 
-Thirteen parts, one lap. From where a tensor sits, through steps, derivatives,
-layers, batches, normalisation, generalisation, attention, position, heads,
-feed-forward and stacking, to running all of it at once. Measured and drawn each
-time, and re-measured the several times the first measurement turned out wrong.
+That is thirteen parts. What the measuring was for is the series' own answer, and
+it was not for making anything faster. **It was for finding what was wrong.**
+
+In part four the culprit for a dead signal looked like `tanh`, and its derivative
+turned out to be `1.0000`, the largest it can be. In part six the drift at small
+batches looked like a bad estimate of the standard deviation, and the output's
+standard deviation turned out to be exactly one at every batch size. In part ten
+a head's rank ceiling was written up as forbidding a pattern, until measuring
+showed rank 2 suffices for any permutation and the section had to be rewritten.
+And in this part a model whose loss curve descends beautifully to `0.03` turned
+out to be worse than guessing.
+
+Each time a plausible account came first and measurement found it wrong. That is
+what the drawing is for.

@@ -9,6 +9,7 @@ series:
   part: 8
 ---
 
+
 Part three flattened the weights into int8: the values got coarser and the count
 stayed. There is an opposite move - **keep the precision and cut the count**, by
 setting some of them to zero.
@@ -187,11 +188,6 @@ of that benefit.
   COO. At equal compression, quantisation wins
 - It is not faster. Zeroing `99%` gives `1.01x`. Compression is a memory story,
   not a time one
-
-Eight parts: the rule for choosing, how not to compute twice, the price of
-throwing away precision, the price of writing ahead, the price of handling many at
-once, the price of choosing what to discard, the price of reading against writing,
-and the price of cutting the count.
 
 Next time takes up the place part five explicitly left open. It measured padding
 waste and only named the remedies; this measures one.

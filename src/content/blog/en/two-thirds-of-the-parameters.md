@@ -167,6 +167,6 @@ over.
   pieces, and going from width 2 to 32 takes the error `0.6221` -> `0.0250`
 - The layer is exactly `Σ relu(k_i · x) v_i`. Look up, then write
 
-Eleven parts. Next time the blocks get stacked for real. The pieces have been
+Next time the blocks get stacked for real. The pieces have been
 examined one at a time; what remains is the order they have to be wired in for
 twenty layers to train at all.

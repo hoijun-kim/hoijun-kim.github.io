@@ -9,6 +9,7 @@ series:
   part: 5
 ---
 
+
 Part two's gradient descent looked at all the data for every gradient. With four
 data points that was fine. With a million, every step reads a million.
 
@@ -211,9 +212,6 @@ Two more costs remain.
   `0.0904`, and the smaller the batch the higher that floor sits
 - Batch size is a dial trading accuracy against step count, not a number that
   should be as large as possible
-
-Five parts: where a tensor sits, the size of a step, the path a derivative takes,
-what the product does once layers stack, and the price of cutting the data up.
 
 Next time goes back to part four. All that care over initialisation turns out to
 be removable by adding one line per layer - measuring how normalisation erases

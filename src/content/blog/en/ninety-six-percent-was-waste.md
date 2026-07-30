@@ -9,6 +9,7 @@ series:
   part: 5
 ---
 
+
 In part two the cache cut the arithmetic `134.5`-fold and the clock only
 `2.94`-fold. The diagnosis was that on a small model the cost is overhead rather
 than multiplication. This part nails that share down and then takes it back.
@@ -197,10 +198,6 @@ bends `b` upward. Summarising as two linear terms is an approximation, and
   Saturation is `1/b`, `59250` characters a second
 - With spread lengths, growing the batch converges the padding waste on `50%`
 - The two numbers belong to this machine. What transfers is the way of measuring
-
-Five parts: the rule for choosing, how not to compute twice, the price of
-throwing away precision, the price of writing ahead, and the price of handling
-many at once.
 
 Next time takes up the other problem part two left behind. The cache outgrew the
 weights, so what breaks when the oldest entries get thrown away.

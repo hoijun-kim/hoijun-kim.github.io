@@ -222,6 +222,5 @@ the seat number around with the passenger and nobody has changed seats.
 - What is added also blurs. The topic partner's share falls from `0.389` to
   `0.140`
 
-Nine parts. Next time the head gets split in several. If one attention produces
-one weighted average, the next question is what several of them look at
-separately - measured and drawn, as ever.
+Next time the head gets split in several. If one attention produces one weighted
+average, the next question is what several of them look at separately.
