@@ -165,3 +165,6 @@ Seven parts: the rule for choosing, how not to compute twice, the price of
 throwing away precision, the price of writing ahead, the price of handling many
 at once, the price of choosing what to discard, and the price of reading against
 writing.
+
+Next time goes back to part three. There the weights got coarser; this time they
+get removed, and the two are compared at equal compression.
