@@ -81,6 +81,15 @@ different numbers, which is why `shares_memory` is True.
     <path d="M 95 186 L 247 186 L 399 186"/><circle cx="95" cy="186" r="3.2"/><circle cx="247" cy="186" r="3.2"/><circle cx="399" cy="186" r="3.2"/>
     <path d="M 133 198 L 285 198 L 437 198"/><circle cx="133" cy="198" r="3.2"/><circle cx="285" cy="198" r="3.2"/><circle cx="437" cy="198" r="3.2"/>
   </g>
+<g class="pulses">
+<path class="pulse b" pathLength="1" d="M 19 100 L 57 100 L 95 100 L 133 100" style="--d: 0.0s"/>
+<path class="pulse b" pathLength="1" d="M 171 100 L 209 100 L 247 100 L 285 100" style="--d: 0.5s"/>
+<path class="pulse b" pathLength="1" d="M 323 100 L 361 100 L 399 100 L 437 100" style="--d: 1.0s"/>
+<path class="pulse" pathLength="1" d="M 19 162 L 171 162 L 323 162" style="--d: 0.0s"/>
+<path class="pulse" pathLength="1" d="M 57 174 L 209 174 L 361 174" style="--d: 0.45s"/>
+<path class="pulse" pathLength="1" d="M 95 186 L 247 186 L 399 186" style="--d: 0.9s"/>
+<path class="pulse" pathLength="1" d="M 133 198 L 285 198 L 437 198" style="--d: 1.35s"/>
+</g>
 </svg>
 <figcaption>One buffer, the same twelve values. Only the stride changed.</figcaption>
 </figure>

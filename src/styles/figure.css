@@ -112,6 +112,35 @@
 .fig .spread.ok { fill: var(--accent); }
 .fig .spread.bad, .fig .spread.bad2 { fill: var(--ink-2); }
 
+/* ---- 흐름 애니메이션 ----------------------------------------------------
+   계산 순서를 보여 준다. 간선마다 짧은 빛이 한 번 지나가고, 지나가는 순서가
+   실제 계산 순서다. 순전파 간선들이 왼쪽에서 오른쪽으로 차례로 지나간 뒤
+   역전파 줄이 반대로 돌아온다.
+
+   빛은 간선의 경로 방향을 따르므로, 역전파 경로가 오른쪽에서 왼쪽으로 그려져
+   있으면 빛도 그렇게 간다. 방향을 따로 지정할 필요가 없다.
+
+   값은 항상 보인다. 흐름만 움직이므로 읽는 도중에 숫자가 사라지지 않는다. */
+
+.fig .pulse { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round;
+              stroke-dasharray: 0.05 1; stroke-dashoffset: 1; opacity: 0; }
+.fig .pulse.b { stroke: var(--ink-2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .fig .pulse {
+    opacity: 0.95;
+    animation: fig-march 6s linear infinite;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes fig-march {
+    0%   { stroke-dashoffset: 1; opacity: 0; }
+    3%   { opacity: 0.95; }
+    28%  { stroke-dashoffset: 0; opacity: 0.95; }
+    32%  { stroke-dashoffset: 0; opacity: 0; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+}
+
 /* ---- 애니메이션 --------------------------------------------------------
    시간이 실제 축인 그림만 움직인다. 걸음, 에포크, 생성한 글자 수처럼 왼쪽에서
    오른쪽으로 벌어지는 일이 있을 때만. 층 번호나 비트 수는 시간이 아니라서 안
