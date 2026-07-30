@@ -218,7 +218,10 @@ characters, which means this part's finding that "per-channel adds little" is
 - This model has no outliers. A channel-range ratio of `1.5` leaves little for
   per-channel to win, so this conclusion does not transfer to a large model
 
-Three parts around the far side of training: the rule for choosing, how not to
-compute twice, and the price of throwing away precision. Measured and drawn each
-time, and each time what the theory promised and what actually arrived were
+Three parts: the rule for choosing, how not to compute twice, and the price of
+throwing away precision. Each time what the theory promised and what arrived were
 different.
+
+Next time the 4-bit model built here gets reused rather than discarded. A cheap
+model writes characters ahead and an expensive one checks them in a single pass -
+starting with whether the output really survives that.
