@@ -192,3 +192,6 @@ Eight parts: the rule for choosing, how not to compute twice, the price of
 throwing away precision, the price of writing ahead, the price of handling many at
 once, the price of choosing what to discard, the price of reading against writing,
 and the price of cutting the count.
+
+Next time takes up the place part five explicitly left open. It measured padding
+waste and only named the remedies; this measures one.
