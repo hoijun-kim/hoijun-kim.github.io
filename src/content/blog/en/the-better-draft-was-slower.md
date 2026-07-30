@@ -229,6 +229,8 @@ on the clock.
   `(chars per pass) / (1 + k·c)`
 
 Four parts: the rule for choosing, how not to compute twice, the price of
-throwing away precision, and the price of writing ahead. Four times over, what
-was promised and what arrived were different - and this time the gap itself got a
-formula.
+throwing away precision, and the price of writing ahead.
+
+Next time returns to the gap part two could not explain. If overhead is what is
+being paid for, how large is that share exactly - and is there a way to take it
+back.
