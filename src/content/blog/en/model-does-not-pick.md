@@ -183,10 +183,13 @@ top-k 10    repetition 0.003   '```\n\n(16, 4)`, all scale mether the settyon: `
 top-p 0.9   repetition 0.008   '```\nlambda = a @ Ws * in independent of a the minimum bu'
 ```
 
-In a model this small both read about the same. With a vocabulary of only 100
-the tail is short, so there is little to separate them. In a model with 50,000
-tokens the 49,000 in the tail add up to mass that cannot be ignored, and that is
-where the difference grows.
+In a model this small both read about the same. With a vocabulary of only 100 the
+tail is short - everything from rank 11 down holds `0.0249` on average.
+
+From here on this is **extrapolation, not measurement**. With a vocabulary of
+50,000 the 49,000 in the tail would presumably add up to a larger share and the
+two schemes would separate more. This experiment has one vocabulary of 100 and
+does not confirm that.
 
 ## So
 

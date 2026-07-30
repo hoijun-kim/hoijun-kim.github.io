@@ -163,9 +163,19 @@ Each row sums to one, because what attention does is not **selection** but
 proportion. Multiplying by this matrix, `A @ X`, is the layer's output.
 
 Nothing here was learned. Similar embeddings give a large dot product, and a
-large dot product gets a large share from the softmax. A real transformer uses
-`XW_q` and `XW_k` instead of `X`, but what those `W`s do is **choose which
-similarity to look at**, not change this structure.
+large dot product gets a large share from the softmax.
+
+Setting `Q = K = X` does cost one thing worth naming, though: it makes the logit
+matrix **exactly symmetric**. Measured, `max|L - L.T|` is `0.00e+00`. How much
+`t0` looks at `t3` and how much `t3` looks at `t0` are forced equal at the logit
+level. The two reading `0.389` and `0.468` above differ only because the softmax
+normalises each row separately; the logits beneath them are the same number.
+
+A real transformer uses `XW_q` and `XW_k` instead of `X`, and once `W_q` and
+`W_k` differ the logits stop being symmetric - over 200 random pairs of `W`,
+`|L - L.T| / |L|` has a median of `0.953`. So those two matrices do more than
+choose which similarity to look at: they **give looking a direction**. This toy
+shows what attention computes and cannot show that directionality.
 
 ## The line that divides by sqrt(d)
 

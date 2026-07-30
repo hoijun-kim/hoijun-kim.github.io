@@ -194,8 +194,11 @@ itself `0.005`, and about `0.005` everywhere else. A nearly pure
 previous-character head, arrived at by training.
 
 The other three heads in that block sit between `0.015` and `0.030` at every
-distance. Spread evenly across a full context that would be about `0.010`, so
-they are effectively **looking nowhere**. Part ten's "the structure only makes
+distance. Entropy makes how even that is explicit: spreading uniformly over
+everything visible from those positions scores `4.551`, and the three heads score
+`4.430`, `4.440` and `4.391`, or `0.97` of it. Their largest weights are `0.030`,
+`0.029` and `0.040`. They are effectively **looking nowhere**. Head 2 on the same
+scale is `0.660`, a ratio of `0.145`. Part ten's "the structure only makes
 room" splits like that inside a single block.
 
 In blocks 1 and 2, eleven of the twelve heads peak at distance 1, but broadly,
