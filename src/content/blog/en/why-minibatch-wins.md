@@ -113,21 +113,21 @@ batches would not be a fair comparison.
 <text class="tick-lbl" x="56" y="16" text-anchor="start">loss</text>
 <line class="floor" x1="56" y1="210.3" x2="446" y2="210.3"/>
 <text class="tick-lbl" x="62" y="224.3" text-anchor="start">minimum 0.0885</text></g>
-<path class="curve bad draw" pathLength="1" fill="none" d="M56.0,52.0 L91.5,68.7 L126.9,85.2 L162.4,101.3 L197.8,116.8 L233.3,131.5 L268.7,144.8 L304.2,156.5 L339.6,166.2 L375.1,173.7 L410.5,179.2 L446.0,183.0"/>
-<path class="curve bad2 draw" pathLength="1" fill="none" d="M56.0,62.6 L91.5,89.7 L126.9,115.7 L162.4,139.8 L197.8,160.5 L233.3,176.3 L268.7,186.8 L304.2,193.1 L339.6,196.7 L375.1,198.9 L410.5,200.3 L446.0,201.4"/>
-<path class="curve ok2 draw" pathLength="1" fill="none" d="M56.0,156.5 L91.5,189.3 L126.9,191.8 L162.4,193.3 L197.8,194.7 L233.3,196.1 L268.7,197.3 L304.2,198.5 L339.6,199.6 L375.1,200.6 L410.5,201.5 L446.0,202.3"/>
-<path class="curve ok draw" pathLength="1" fill="none" d="M56.0,197.9 L91.5,204.7 L126.9,207.9 L162.4,209.3 L197.8,209.5 L233.3,209.9 L268.7,210.1 L304.2,210.1 L339.6,210.3 L375.1,210.2 L410.5,210.2 L446.0,210.2"/>
-<path class="curve ok3 draw" pathLength="1" fill="none" d="M56.0,209.2 L91.5,210.3 L126.9,210.3 L162.4,210.2 L197.8,209.8 L233.3,209.6 L268.7,209.8 L304.2,210.2 L339.6,210.3 L375.1,209.7 L410.5,210.3 L446.0,210.3"/>
+<path class="curve bad" fill="none" d="M56.0,52.0 L91.5,68.7 L126.9,85.2 L162.4,101.3 L197.8,116.8 L233.3,131.5 L268.7,144.8 L304.2,156.5 L339.6,166.2 L375.1,173.7 L410.5,179.2 L446.0,183.0"/>
+<path class="curve bad2" fill="none" d="M56.0,62.6 L91.5,89.7 L126.9,115.7 L162.4,139.8 L197.8,160.5 L233.3,176.3 L268.7,186.8 L304.2,193.1 L339.6,196.7 L375.1,198.9 L410.5,200.3 L446.0,201.4"/>
+<path class="curve ok2" fill="none" d="M56.0,156.5 L91.5,189.3 L126.9,191.8 L162.4,193.3 L197.8,194.7 L233.3,196.1 L268.7,197.3 L304.2,198.5 L339.6,199.6 L375.1,200.6 L410.5,201.5 L446.0,202.3"/>
+<path class="curve ok" fill="none" d="M56.0,197.9 L91.5,204.7 L126.9,207.9 L162.4,209.3 L197.8,209.5 L233.3,209.9 L268.7,210.1 L304.2,210.1 L339.6,210.3 L375.1,210.2 L410.5,210.2 L446.0,210.2"/>
+<path class="curve ok3" fill="none" d="M56.0,209.2 L91.5,210.3 L126.9,210.3 L162.4,210.2 L197.8,209.8 L233.3,209.6 L268.7,209.8 L304.2,210.2 L339.6,210.3 L375.1,209.7 L410.5,210.3 L446.0,210.3"/>
 <path class="curve bad" fill="none" d="M254.54545454545453,40 L276.5454545454545,40"/>
-<text class="lbl bad reveal" x="282.5454545454545" y="44" text-anchor="start">full batch lr 0.02</text>
+<text class="lbl bad" x="282.5454545454545" y="44" text-anchor="start">full batch lr 0.02</text>
 <path class="curve bad2" fill="none" d="M254.54545454545453,55 L276.5454545454545,55"/>
-<text class="lbl bad reveal" x="282.5454545454545" y="59" text-anchor="start">full batch lr 0.14462</text>
+<text class="lbl bad" x="282.5454545454545" y="59" text-anchor="start">full batch lr 0.14462</text>
 <path class="curve ok2" fill="none" d="M254.54545454545453,70 L276.5454545454545,70"/>
-<text class="lbl ok reveal" x="282.5454545454545" y="74" text-anchor="start">batch 256</text>
+<text class="lbl ok" x="282.5454545454545" y="74" text-anchor="start">batch 256</text>
 <path class="curve ok" fill="none" d="M254.54545454545453,85 L276.5454545454545,85"/>
-<text class="lbl ok reveal" x="282.5454545454545" y="89" text-anchor="start">batch 32</text>
+<text class="lbl ok" x="282.5454545454545" y="89" text-anchor="start">batch 32</text>
 <path class="curve ok3" fill="none" d="M254.54545454545453,100 L276.5454545454545,100"/>
-<text class="lbl ok reveal" x="282.5454545454545" y="104" text-anchor="start">batch 8</text>
+<text class="lbl ok" x="282.5454545454545" y="104" text-anchor="start">batch 8</text>
 </svg>
 <figcaption>An epoch is one pass over the data, so all five cases pay the same price for it. Batch 8 reaches the floor within one epoch and batch 32 takes three. Full batch, even handed its best learning rate, has not arrived by twelve.</figcaption>
 </figure>

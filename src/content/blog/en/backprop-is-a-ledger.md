@@ -58,17 +58,17 @@ the wobbles.
 <path d="M318 100 L360 100" marker-end="url(#ah)"/>
 </g>
 <g class="pulses">
-<path class="pulse" pathLength="1" d="M92 62 C 122 62, 128 100, 152 100" style="--d: 0.0s"/>
-<path class="pulse" pathLength="1" d="M92 100 C 122 100, 128 100, 152 100" style="--d: 0.0s"/>
-<path class="pulse" pathLength="1" d="M92 138 C 122 138, 128 100, 152 100" style="--d: 0.0s"/>
-<path class="pulse" pathLength="1" d="M214 100 L256 100" style="--d: 0.75s"/>
-<path class="pulse" pathLength="1" d="M318 100 L360 100" style="--d: 1.5s"/>
-<path class="pulse b" pathLength="1" d="M438 196 L16 196" style="--d: 2.2s"/>
-<path class="pulse b" pathLength="1" d="M360 100 L318 100" style="--d: 2.5s"/>
-<path class="pulse b" pathLength="1" d="M256 100 L214 100" style="--d: 3.1s"/>
-<path class="pulse b" pathLength="1" d="M152 100 C 128 100, 122 62, 92 62" style="--d: 3.7s"/>
-<path class="pulse b" pathLength="1" d="M152 100 C 128 100, 122 100, 92 100" style="--d: 3.7s"/>
-<path class="pulse b" pathLength="1" d="M152 100 C 128 100, 122 138, 92 138" style="--d: 3.7s"/>
+<path class="pulse" pathLength="1" fill="none" stroke="none" d="M92 62 C 122 62, 128 100, 152 100" style="--d: 0.0s"/>
+<path class="pulse" pathLength="1" fill="none" stroke="none" d="M92 100 C 122 100, 128 100, 152 100" style="--d: 0.0s"/>
+<path class="pulse" pathLength="1" fill="none" stroke="none" d="M92 138 C 122 138, 128 100, 152 100" style="--d: 0.0s"/>
+<path class="pulse" pathLength="1" fill="none" stroke="none" d="M214 100 L256 100" style="--d: 0.75s"/>
+<path class="pulse" pathLength="1" fill="none" stroke="none" d="M318 100 L360 100" style="--d: 1.5s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M438 196 L16 196" style="--d: 2.2s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M360 100 L318 100" style="--d: 2.5s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M256 100 L214 100" style="--d: 3.1s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M152 100 C 128 100, 122 62, 92 62" style="--d: 3.7s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M152 100 C 128 100, 122 100, 92 100" style="--d: 3.7s"/>
+<path class="pulse b" pathLength="1" fill="none" stroke="none" d="M152 100 C 128 100, 122 138, 92 138" style="--d: 3.7s"/>
 </g>
 <g class="grad-link">
 <path d="M10 62 L4 62 L4 172 L14 172"/>

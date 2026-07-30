@@ -99,20 +99,20 @@ should be **130 times faster**.
 <text class="tick-lbl" x="446.0" y="226" text-anchor="middle">1024</text>
 <text class="tick-lbl" x="252.0" y="262" text-anchor="middle">characters generated</text>
 <text class="tick-lbl" x="58" y="16" text-anchor="start">time (ms)</text></g>
-<path class="curve bad draw" pathLength="1" fill="none" d="M58.0,181.2 L155.0,153.9 L252.0,123.4 L349.0,89.0 L446.0,41.7"/>
-<path class="curve ok draw" pathLength="1" fill="none" d="M58.0,195.7 L155.0,178.6 L252.0,153.0 L349.0,133.7 L446.0,108.4"/>
+<path class="curve bad" fill="none" d="M58.0,181.2 L155.0,153.9 L252.0,123.4 L349.0,89.0 L446.0,41.7"/>
+<path class="curve ok" fill="none" d="M58.0,195.7 L155.0,178.6 L252.0,153.0 L349.0,133.7 L446.0,108.4"/>
 <circle cx="58.0" cy="181.2" r="2.4" style="fill:var(--ink-2)"/>
-<circle class="mark reveal" cx="58.0" cy="195.7" r="2.4"/>
+<circle class="mark" cx="58.0" cy="195.7" r="2.4"/>
 <circle cx="155.0" cy="153.9" r="2.4" style="fill:var(--ink-2)"/>
-<circle class="mark reveal" cx="155.0" cy="178.6" r="2.4"/>
+<circle class="mark" cx="155.0" cy="178.6" r="2.4"/>
 <circle cx="252.0" cy="123.4" r="2.4" style="fill:var(--ink-2)"/>
-<circle class="mark reveal" cx="252.0" cy="153.0" r="2.4"/>
+<circle class="mark" cx="252.0" cy="153.0" r="2.4"/>
 <circle cx="349.0" cy="89.0" r="2.4" style="fill:var(--ink-2)"/>
-<circle class="mark reveal" cx="349.0" cy="133.7" r="2.4"/>
+<circle class="mark" cx="349.0" cy="133.7" r="2.4"/>
 <circle cx="446.0" cy="41.7" r="2.4" style="fill:var(--ink-2)"/>
-<circle class="mark reveal" cx="446.0" cy="108.4" r="2.4"/>
-<text class="lbl bad reveal" x="177.2" y="97.3" text-anchor="start">no cache - n^1.80</text>
-<text class="lbl ok reveal" x="274.2" y="185.9" text-anchor="start">with cache - n^1.15</text>
+<circle class="mark" cx="446.0" cy="108.4" r="2.4"/>
+<text class="lbl bad" x="177.2" y="97.3" text-anchor="start">no cache - n^1.80</text>
+<text class="lbl ok" x="274.2" y="185.9" text-anchor="start">with cache - n^1.15</text>
 <text class="tick-lbl" x="442" y="38" text-anchor="end">both axes log</text>
 </svg>
 <figcaption>Time to generate n characters, both axes logarithmic. Without a cache the slope is 1.80; with one it is 1.15. What the cache changes is the slope rather than the constant, which is why the gap widens with length.</figcaption>
