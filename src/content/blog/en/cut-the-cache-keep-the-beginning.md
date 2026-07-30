@@ -187,3 +187,7 @@ model**.
 Six parts: the rule for choosing, how not to compute twice, the price of throwing
 away precision, the price of writing ahead, the price of handling many at once,
 and the price of choosing what to discard.
+
+Next time measures a time nobody has measured yet in this series. Everything so
+far has been the cost of producing characters; before that comes reading the
+prompt.
