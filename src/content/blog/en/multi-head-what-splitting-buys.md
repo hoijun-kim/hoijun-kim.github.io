@@ -1,6 +1,6 @@
 ---
 title: "What splitting the head into eight actually changes"
-description: "The parameter count is identical, so why split at all. This measures the fact that one weighted average cannot carry two things, and what the rank ceiling on a single head makes outright impossible."
+description: "The parameter count is identical, so why split at all. This measures the fact that one weighted average cannot carry two things, and what the rank ceiling on a head actually limits - along with how I misread it the first time."
 date: 2025-08-10
 lang: en
 kind: guide
@@ -264,7 +264,7 @@ Here I chose which dimensions went to which head. A real model has `Wq` and `Wk`
 learn that. What the structure guarantees is only that there is **room** to look
 at several things separately; what gets looked at is up to training.
 
-## The second reason: a rank ceiling
+## The second reason: a rank ceiling - and I got this wrong first
 
 Splitting costs something too. One head's logit matrix is `Q_h K_h^T`, and since
 `Q_h` and `K_h` are `dh` wide, its **rank cannot exceed `dh`**.
@@ -274,26 +274,81 @@ Splitting costs something too. One head's logit matrix is `Q_h K_h^T`, and since
 one of 8 heads (dh=8)  12 tokens, logits 12x12, rank 8
 ```
 
-To see whether that binds, ask for a high-rank pattern. "Look three places back"
-is a permutation matrix, rank `12`. Approximating it at rank `k` goes like this.
+That part is true. Writing this the first time, I took one step further from it:
+"so a `dh=8` head cannot in principle express 'look three places back' across 12
+tokens, and eight of twelve is the ceiling." The evidence was that approximating
+that permutation matrix at rank `k` leaves an error of `sqrt((n-k)/n)` with a
+fraction `k/n` correct.
+
+**That was wrong.** The arithmetic holds; the thing being measured does not.
+
+Attention does not need to **reconstruct** that logit matrix. After the softmax
+what matters is which entry is largest and how much smaller the next one is.
+Finding a matrix close to the target and finding a matrix that produces the
+target's ordering are different problems.
+
+Optimising directly shows it at once. Constrain the rank to `k`, then train
+`A @ B` under cross entropy to hit the right column:
 
 ```
-rank  2   relative error 0.9129   fraction of tokens correct 0.17
-rank  4   relative error 0.8165   fraction of tokens correct 0.33
-rank  8   relative error 0.5774   fraction of tokens correct 0.67
-rank 12   relative error 0.0000   fraction of tokens correct 1.00
+target                     fraction correct, SVD   fraction correct, optimised
+'three back' at rank 2                      0.17                         1.00
+'three back' at rank 4                      0.33                         1.00
+'three back' at rank 8                      0.67                         1.00
 ```
 
-The error is exactly `sqrt((n-k)/n)`. A permutation matrix has all its singular
-values equal, so every rank thrown away costs exactly `1/n`. The fraction
-correct is exactly `k/n`.
+**Rank 2 gets all of them.** And it is not special to a cyclic shift.
 
-So a head with `dh=8` **cannot in principle** express "three places back" across
-12 tokens. Eight of the twelve is the ceiling. The finer the split, the lower
-this ceiling goes.
+```
+minimum rank that gets every argmax right
+  everyone looks at the same place    1
+  'three back' (cyclic shift)         2
+  three random permutations           2, 2, 2
+  at 4, 8, 12 and 16 tokens           2, 2, 2, 2
+```
 
-Eight is therefore a compromise. More heads means more things watched
-separately, and each one able to express a simpler pattern.
+Rank 1 is `u v^T`, so every row's maximum lands in the same column - it can only
+say "all look at one place". At rank 2, **any permutation at any number of
+tokens** becomes reachable.
+
+Given part nine this should have been obvious. That part measured a positional
+shift as a **rank-2 rotation** per frequency pair, and this one claimed rank 8
+cannot express a shift. The two contradicted each other.
+
+## So what a small dh actually costs
+
+Not the logits but the **output**. A head's output is `A @ V_h`, and `V_h` has
+only `dh` columns, so its rank cannot exceed `min(n, dh)` - for any `A`
+whatsoever.
+
+```
+1 head  (dh=64)        output 12x64  rank 12
+one of 8 heads (dh=8)  output 12x8   rank 8
+```
+
+Measuring how far an arbitrary target output can be matched:
+
+```
+dh = 8     no A reaches more than 42.3% of the target
+dh = 64    100% reachable
+```
+
+That value is exactly `1 - sqrt(1 - dh/n)`: projecting each column of a random
+target onto a `dh`-dimensional subspace keeps `dh/n` of the squared norm. Over
+200 random targets it measures `42.4%` with a standard deviation of `1.84`.
+
+The `sqrt((n-k)/n)` I misapplied to the logits in the previous section **is the
+right formula here**, on the output. The same arithmetic is wrong in one place
+and right in another.
+
+What splitting costs is therefore **not where to look but what to write**. The
+directions a head can push into the residual stream drop to `dh` of them. Split
+into eight and each head gets a narrow channel - and there are eight channels.
+The two heads scoring `0.0000` in the previous section were using two of those
+eight separately.
+
+Eight is therefore a compromise. More heads means more things watched separately,
+and each with fewer dimensions to write with.
 
 ## Concatenating is adding
 
@@ -330,8 +385,9 @@ structure only **makes room**; whether the room gets used is another matter.
   `0.7075`
 - Two heads score `0.0000`, because they write to different places and are only
   added at the end
-- The price is rank. A `dh=8` head can imitate a rank-12 pattern only up to 8,
-  with the fraction correct landing exactly on `k/n`
+- The price is rank, but of the **output** rather than the logits. A `dh=8` head
+  reaches only `42.3%` of an arbitrary target output, exactly
+  `1 - sqrt(1 - dh/n)`. Where to look needs rank 2
 - Concatenate-then-project equals sum-of-contributions, to `6.9e-17`
 
 Ten parts. Next time, the part sitting next to attention that nobody looks at -

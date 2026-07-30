@@ -162,7 +162,9 @@ A loss of `0.03`. Far under the bigram's `2.65`, and far under the `1.75` of the
 model that trained properly. Validation falls right alongside it, so there is no
 overfitting signal either. Even part seven's "judge by validation" fails here.
 
-Of course it does. Nothing was learned; **the answer was read off the side**.
+**Reading the answer off the side is simply cheaper.** It may have picked up
+something - positional structure, say - but measured on predicting the next
+character it is worse than before training.
 Confirming it takes one line - measure the same model with the mask switched on.
 
 ```
