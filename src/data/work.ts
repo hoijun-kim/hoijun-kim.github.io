@@ -29,6 +29,23 @@ export const profile = {
 
 export const work: Project[] = [
   {
+    name: "flip",
+    version: "v0.1.0",
+    summary:
+      "Pick a region of your screen. flip sends the page-turn key to the window you chose, waits for the redraw to settle, captures the region, and repeats - then hands you a folder of images or an assembled PDF.",
+    highlight: ["page-turn key", "assembled PDF"],
+    links: {
+      download: "https://github.com/hoijun-kim/flip/releases",
+      site: "https://hoijun-kim.github.io/flip/",
+      source: "https://github.com/hoijun-kim/flip",
+    },
+    stack: ["Go", "Svelte", "Wails", "cgo-free"],
+    runs: { label: "runs on", items: ["Windows"] },
+    replaces: ["Snipping Tool", "Print to PDF"],
+    license: "PolyForm NC 1.0.0",
+    colour: { light: "#0C97A9", dark: "#22C1D6" },
+  },
+  {
     name: "shape",
     version: "v0.1.0",
     summary:
