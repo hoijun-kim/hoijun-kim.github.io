@@ -49,8 +49,11 @@ context 64    410 us
 context 127   428 us
 ```
 
-Barely moves with context length. Around `400 us`, and that value is essentially
-part five's `a`. **Every character produced pays the whole fixed overhead again.**
+Barely moves with context length. Around `400 us`, which is where part five's
+fixed overhead sat - it fitted `a = 456.4 us` from the batch sweep. **Every
+character produced pays the whole fixed overhead again.** The two do not match
+exactly because they were measured separately, and on this laptop absolute times
+drift by about that much as a matter of course.
 
 <figure class="fig">
 <svg viewBox="0 0 460 272" role="img" aria-label="Per-character time when a prompt of P characters goes in at once. It falls as P grows, down to a fortieth of one generated character">

@@ -157,16 +157,23 @@ at every compression ratio.**
 The other reason to prune is speed: if half the multiplications are by zero,
 surely half can be skipped. Measured:
 
+The claim is about multiplication, so narrow it to one multiplication - the shape
+of the first feed-forward layer, `(128 x 128) @ (128 x 512)`, round-robin over 400
+rounds, divided against the dense original inside each round.
+
 ```
-dense original   889 us
-50% sparse       881 us   1.01x
-90% sparse       885 us   1.00x
-99% sparse       882 us   1.01x
+                 time (us)   vs dense   quartiles
+dense original        73.4      1.000
+50% sparse            73.6      1.010   0.957 ~ 1.105
+90% sparse            73.2      1.013   0.924 ~ 1.147
+99% sparse            74.0      1.005   0.850 ~ 1.142
 ```
 
-**Zeroing 99% changes nothing.** A matrix multiply is still a dense matrix
-multiply, and multiplying by zero is still multiplying. Skipping would require
-checking where the zeros are, and that check costs more than the multiplication.
+**Zeroing 99% changes nothing.** All three quartile ranges contain `1.0`, so
+there is no ground for saying a difference exists. A matrix multiply is still a
+dense matrix multiply, and multiplying by zero is still multiplying. Skipping
+would require checking where the zeros are, and that check costs more than the
+multiplication.
 
 It is part three's story again, where int8 saved memory and not time, and part
 four's, where `c = 1.059` made the 8-bit draft dearer than the target.
