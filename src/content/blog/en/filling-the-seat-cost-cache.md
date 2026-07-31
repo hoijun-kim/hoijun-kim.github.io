@@ -123,48 +123,55 @@ Measuring one step across a grid of row counts and cache lengths and fitting
 `t = a + b·R + d·R·C`:
 
 ```
-a = 640 us        fixed, per step
-b = 4.30 us       per row
-d = 0.0943 us     per row x cache slot
+a = 569 us         fixed, per step
+b = 7.68 us        per row
+d = 0.1015 us      per row x cache slot
 ```
 
-At 32 rows and cache 104 that is `59%` fixed, `13%` on rows, `29%` attention.
-Halving the rows touches half of thirteen percent.
+Worst residual over the 3 x 3 grid is `2.6%`. At 32 rows and cache 104 that is
+`49%` fixed, `21%` on rows, `29%` attention.
 
-Pricing five schedules with that, against 21 rounds of paired measurement:
+Pricing five schedules with that, against 41 rounds of paired measurement:
 
 ```
                         predicted   measured   25th ~ 75th
 static, arrival              1.00       1.00
-static, by prompt            1.07       1.12   1.07 ~ 1.15
-static, by gen len           1.57       1.60   1.53 ~ 1.63
-continuous, arrival          1.54       1.58   1.51 ~ 1.60
-continuous, by prompt        1.62       1.72   1.65 ~ 1.78
+static, by prompt            1.07       1.06   0.94 ~ 1.13
+static, by gen len           1.57       1.57   1.49 ~ 1.66
+continuous, arrival          1.56       1.58   1.50 ~ 1.69
+continuous, by prompt        1.64       1.65   1.54 ~ 1.78
+```
+
+The sorting row straddles `1.0`, buried by going through a common baseline. So
+the two configurations were divided against each other directly instead, in the
+same round, alternating which ran first, 61 times:
+
+```
+static,     by prompt / arrival   1.077   quartiles 1.036 ~ 1.127   won 54 of 61
+continuous, by prompt / arrival   1.057   quartiles 0.992 ~ 1.102   won 44 of 61
 ```
 
 Three things fall out.
 
-**One.** Sorting by prompt length alone is `1.12`. It lifted cache occupancy a
-full 20 points, `61.7%` to `82.3%`, and bought 12% of the time - because
-attention is only 29% of a step. Part nine's "removing the waste does not halve
-the time" is not even a half here.
+**One.** Sorting by prompt length is `1.08`. It lifted cache occupancy a full 20
+points, `61.7%` to `82.3%`, and bought 8% of the time - because attention is only
+29% of a step. Part nine's "removing the waste does not halve the time" is not
+close to a half here.
 
-**Two.** Continuous batching alone is `1.58`, effectively the oracle's `1.60`. It
+**Two.** Continuous batching alone is `1.58`, effectively the oracle's `1.57`. It
 delivers what knowing the unknowable would have delivered, while knowing nothing.
 
-**Three.** Together they are `1.72`, because they do not overlap. Sorting fixes
-padding in the cache dimension; continuous batching fixes it in the row
+**Three.** Together they are `1.65`. Laying the sort on top of continuous batching
+adds `1.06` - small, 44 rounds of 61, but one-sided. They do not overlap: sorting
+fixes padding in the cache dimension, continuous batching fixes it in the row
 dimension. Continuous plus prompt sort has the smallest `rows x cache` total of
 the five, `801,245`.
-
-The whole table was measured again some time later: medians `1.14 / 1.59 / 1.56 /
-1.70`. All four land inside the quartile ranges above and the ordering holds.
 
 ## One place this disagrees with part nine
 
 Part nine measured the cache going from 1 to 128 at batch 32 as `675 us` of
 added time and reported `48.3%` of a step as length-dependent. This grid fit puts
-the same span at `383 us` and `32.9%`.
+the same span at `412 us` and `33.8%`.
 
 Same laptop, same model, fifteen points apart. Part nine was a single sweep over
 cache length (its table even dips going from 16 to 32), while this is a plane fit
@@ -183,9 +190,15 @@ Holding the cache as one dense tensor is also a choice. Split it into fixed-size
 blocks and each row can hold only what it needs, and the price continuous
 batching pays here disappears. This part did not go there.
 
-And the absolute times from pricing come out around a quarter of what was
-measured: one step inside a long loop costs far more than one step timed on its
-own in a grid. The ratios held up; the absolute numbers did not.
+The priced absolute times land `24~29%` below the measured ones. All five miss in
+the same direction by about the same amount, so the ratios get used and the
+absolute times do not.
+
+The day this table was first measured, the same trace came out at `1,581 ms`.
+Today it is `461 ms`. Same code, same data, a factor of 3.4 - the laptop was busy
+with other things that day. The speedup ratio that day was also `1.58`. Only the
+numbers divided within a round survived; had the absolute times been the result,
+every one of them would have been wrong.
 
 ## So
 
@@ -199,5 +212,5 @@ own in a grid. The ratios held up; the absolute numbers did not.
 - The seat is paid for out of the cache: mean cache `93.3 -> 104.1`, the longest
   of the five
 - Row-steps fall 41% while `rows x cache` falls only 34%
-- Measured `1.12` (sorting) / `1.58` (continuous) / `1.72` (both). They fix
+- Measured `1.08` (sorting) / `1.58` (continuous) / `1.65` (both). They fix
   different waste, so they add
