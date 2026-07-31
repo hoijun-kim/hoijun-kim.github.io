@@ -129,3 +129,9 @@
 @media (prefers-reduced-motion: reduce) {
   .fig .pulse-dot { display: none; }
 }
+
+/* 시리즈2 10편 - 슬롯 점유 지도. 채워진 칸은 hm 을 그대로 쓰고 빈 자리만 따로
+   칠한다. 빈 자리가 곧 낭비이므로 배경이 아니라 표시해야 할 것이다. */
+.fig .hm rect.idle { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
+.fig .lgd line { stroke-width: 1.8; }
+.fig .done line { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
