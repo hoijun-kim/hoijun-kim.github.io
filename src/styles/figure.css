@@ -100,6 +100,9 @@
 
 /* part 10 - panel titles for side-by-side matrices */
 .fig .ttl2 { fill: var(--ink-2); font-size: 11px; text-anchor: middle; font-weight: 600; }
+/* 왼쪽 정렬 제목. text-anchor 는 CSS 가 프레젠테이션 속성을 이기므로
+   SVG 안에서 속성으로 못 뒤집는다 */
+.fig .ttl2.l { text-anchor: start; }
 
 /* part 11 - dashed target curve behind the fits */
 .fig .curve.tgt { stroke: var(--muted); stroke-width: 4; opacity: 0.42; }
@@ -111,6 +114,15 @@
 .fig .spread { stroke: none; opacity: 0.13; }
 .fig .spread.ok { fill: var(--accent); }
 .fig .spread.bad, .fig .spread.bad2 { fill: var(--ink-2); }
+
+/* 시리즈2 11편 - 캐시 할당. 쓰는 칸과 잡아 둔 칸을 겹쳐 그린다. 패딩이 배경이
+   아니라 세어야 할 것이라, 잡은 만큼을 먼저 칠하고 쓰는 만큼을 위에 얹는다. */
+.fig .alloc .pad { fill: var(--surface-2); stroke: var(--line); stroke-width: 0.6; }
+.fig .alloc .use { fill: var(--accent); }
+.fig .alloc .blk { stroke: var(--paper); stroke-width: 0.8; opacity: 0.9; }
+.fig .ref { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 4 3; }
+.fig .ref.ok { stroke: var(--accent); }
+.fig .dot { fill: var(--accent); }
 
 /* ---- 흐름 표시 ----------------------------------------------------------
    계산 순서를 점 하나가 경로를 따라가며 보여 준다. 지나가는 순서가 실제 계산

@@ -76,7 +76,7 @@ admit the next queued request the instant one finishes.
 <g class="row-lbl"><text x="53" y="65" transform="rotate(-90 53 65)">32 slots</text></g>
 <g class="row-lbl"><text x="53" y="183" transform="rotate(-90 53 183)">32 slots</text></g>
 <g class="done"><line x1="316.6" y1="136" x2="316.6" y2="230.4"/><text class="lbl" x="321.6" y="225.4">done at 336</text></g>
-<text class="ttl2" x="62" y="253" text-anchor="start">Cache length attention has to read on that step</text>
+<text class="ttl2 l" x="62" y="253">Cache length attention has to read on that step</text>
 <g class="axis">
 <line x1="62" y1="328.0" x2="450" y2="328.0"/>
 <text class="tick-lbl" x="56" y="331.5" text-anchor="end">0</text>
