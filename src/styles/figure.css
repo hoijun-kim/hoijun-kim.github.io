@@ -124,6 +124,11 @@
 .fig .ref.ok { stroke: var(--accent); }
 .fig .dot { fill: var(--accent); }
 
+/* 시리즈2 12편 - 총 시간을 프리필 몫과 디코드 몫으로 가른 가로 막대 */
+.fig .split .pre { fill: var(--ink-2); }
+.fig .split .dec { fill: var(--accent); }
+.fig .split .lbl.r { fill: var(--ink-2); }
+
 /* ---- 흐름 표시 ----------------------------------------------------------
    계산 순서를 점 하나가 경로를 따라가며 보여 준다. 지나가는 순서가 실제 계산
    순서다.
