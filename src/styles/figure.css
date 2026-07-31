@@ -129,6 +129,12 @@
 .fig .split .dec { fill: var(--accent); }
 .fig .split .lbl.r { fill: var(--ink-2); }
 
+/* 시리즈2 13편 - 처리량 대 p99 산점도. 통짜는 점, 조각내기는 네모 */
+.fig .branch { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.fig .chunk { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.4; }
+.fig .dot.bad { fill: var(--ink-2); }
+.fig .ahd { fill: var(--ink-2); }
+
 /* ---- 흐름 표시 ----------------------------------------------------------
    계산 순서를 점 하나가 경로를 따라가며 보여 준다. 지나가는 순서가 실제 계산
    순서다.
