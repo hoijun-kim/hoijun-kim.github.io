@@ -27,6 +27,13 @@ export const series: Record<string, Series> = {
     audience: "앞 시리즈 '보이는 딥러닝' 을 읽었거나, 트랜스포머가 무엇을 계산하는지 알면 된다.",
     lang: "ko",
   },
+  "not-attention": {
+    name: "어텐션 말고",
+    description:
+      "순서를 다루는 방법이 어텐션만 있는 것은 아니다. RNN, LSTM, GRU, 1D 합성곱을 같은 코퍼스에 같은 파라미터 예산으로 학습해서 앞 시리즈의 트랜스포머와 직접 겨룬다 - 같은 것에 대고 재야 비교가 성립한다.",
+    audience: "앞 시리즈 '보이는 딥러닝' 을 읽었거나, 트랜스포머가 무엇을 계산하는지 알면 된다.",
+    lang: "ko",
+  },
 };
 
 export const seriesOf = (id: string): Series | undefined => series[id];
