@@ -1,12 +1,12 @@
 ---
 title: "Sending the gradient further made the loss worse"
 description: "How far back the loss at the last position reaches, measured for five architectures. Gates barely extend it - PyTorch starts the forget gate at bias 0, so half the signal dies every step. Open it and the gradient reaches the whole context, and the loss gets monotonically worse."
-date: 2025-11-25
+date: 2025-12-31
 lang: en
 kind: guide
 series:
   id: not-attention
-  part: 2
+  part: 8
 ---
 
 Part four of the first series watched gradients disappear through twenty stacked
@@ -72,7 +72,7 @@ to 1 and what survives at each distance reads straight off.
 <figcaption>The gradient each position's input embedding receives when the loss at the last position is sent backward, with the last position set to 1 and a log vertical axis. Above: five architectures after training. The CNN stops at 17, the three recurrent models die at almost the same rate, and only the transformer flattens far away. Below: an untrained LSTM with only the forget-gate bias changed. The axis floor is 1e-10 and anything under it is drawn on the floor.</figcaption>
 </figure>
 
-Taking the five architectures from part one, each trained to its own minimum:
+Taking the five architectures from part seven, each trained to its own minimum:
 
 ```
              17 back    64 back   127 back
@@ -92,10 +92,10 @@ the path.
 
 The CNN's entries are `0.00e+00`. Not small - zero.
 
-Part one put its receptive field at `4 x 4 + 1 = 17` characters for four layers
+Part seven put its receptive field at `4 x 4 + 1 = 17` characters for four layers
 of kernel 5. That means positions further back than 17 are not in the computation
 graph at all, and what is not in the graph has no gradient rather than a small
-one. Part one's sentence is confirmed exactly here.
+one. Part seven's sentence is confirmed exactly here.
 
 ## Gates do not extend the reach
 
@@ -167,7 +167,7 @@ character a hundred back rarely decides the one now. Holding the forget gate ope
 makes the hidden state keep carrying old material, and material with no use is
 noise. **Forgetting is a feature.**
 
-Part one already showed the same shape: the transformer sends gradient forty
+Part seven already showed the same shape: the transformer sends gradient forty
 thousand times further than the GRU and loses to it by `11.6%`. Reach does not
 predict performance.
 

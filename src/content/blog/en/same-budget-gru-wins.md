@@ -1,22 +1,21 @@
 ---
 title: "At the same budget the GRU wins - for 700 steps"
 description: "RNN, LSTM, GRU and a 1D causal CNN trained on the same corpus with the same parameter budget and optimiser as the transformer from the previous series. The GRU's best validation loss, 1.6449, beats the transformer's 1.7679. But it only leads between steps 500 and 1200, and by step 4000 it has collapsed to 3.4170."
-date: 2025-11-19
+date: 2025-12-25
 lang: en
 kind: guide
 series:
   id: not-attention
-  part: 1
+  part: 7
 ---
 
-The previous series started at tensors and worked through learning rates,
-backprop, vanishing gradients, minibatches, normalisation and generalisation -
-and then went straight to attention in part eight. The gap in between is total.
-There are ways to mix one position with another besides attention, and writing
-that attention won without having measured them is not writing.
+The six parts before this opened up one recurrent step, the LSTM's gates, the
+GRU, the convolution kernel, the receptive field and pooling. What each of them
+computes has been seen; which of them is better has not.
 
-So measure them. One condition: **everything has to be measured against the same
-thing.**
+So put them together. One condition: **everything has to be measured against the
+same thing.** Match the parameter budget to the transformer from part thirteen of
+the first series, and keep the corpus and the optimiser identical.
 
 ## Matching the budget
 
