@@ -141,6 +141,10 @@
 /* 시리즈3 1편 - 활성 곡선 아래 글자를 한 자씩 세운다 */
 .fig .chars text { fill: var(--ink-2); font-size: 8px; font-family: var(--mono); }
 
+/* 시리즈3 3편 - 2차원 분포를 칸 투명도로. 테두리는 따로 */
+.fig .hm2 rect { fill: var(--accent); }
+.fig rect.frame { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+
 /* ---- 흐름 표시 ----------------------------------------------------------
    계산 순서를 점 하나가 경로를 따라가며 보여 준다. 지나가는 순서가 실제 계산
    순서다.
