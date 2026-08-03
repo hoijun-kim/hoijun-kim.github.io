@@ -149,6 +149,12 @@
 .fig .chars2 text { fill: var(--ink); font-size: 13px; font-family: var(--mono); }
 .fig rect.win { fill: none; stroke: var(--accent); stroke-width: 1.4; }
 
+/* 시리즈3 5편 - 수용장 원뿔. 닿는 자리만 채우고 나머지는 비운다 */
+.fig circle.nd { r: 2.6; }
+.fig circle.nd.on { fill: var(--accent); }
+.fig circle.nd.off { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.fig line.lk { stroke: var(--accent); stroke-width: 0.7; opacity: 0.45; }
+
 /* ---- 흐름 표시 ----------------------------------------------------------
    계산 순서를 점 하나가 경로를 따라가며 보여 준다. 지나가는 순서가 실제 계산
    순서다.

@@ -182,8 +182,13 @@ stop, use the GRU. If you do not, use the transformer.
 
 ## The convolution sees 17 characters
 
-The CNN comes last for reasons of sight rather than budget. Four layers of kernel
-5 reach `17` characters to the left. The other four see all 128.
+Four layers of kernel 5 reach `17` characters to the left. The other four see all
+128.
+
+That was first written up as the reason it comes last. Part five widens the
+window to `125` and gets `1.9967` - **worse** - and even widening by dilation
+alone, without adding a single parameter, takes `1.8709` to `1.9716`. It is not
+losing because its view is narrow.
 
 It is also first to the bottom, at `300` steps. It has the least to learn, so it
 finishes learning first and starts memorising first.
@@ -238,4 +243,5 @@ later.
   loses - gating makes a bigger difference here than attention
 - But the GRU only leads from step `500` to `1200`, and by 4000 it is `2.08`
   times its best. The transformer is at `1.04`
-- The CNN sees `17` characters to its left. It loses on sight, not on budget
+- The CNN sees `17` characters to its left. But part five widens that window and
+  it gets worse - a narrow view is not why it loses
