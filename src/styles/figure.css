@@ -178,3 +178,9 @@
 .fig .hm rect.idle { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
 .fig .lgd line { stroke-width: 1.8; }
 .fig .done line { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 2; }
+
+/* 시리즈3 11편 - 막대 하나에 세 가지 상태를 얹는다. 못 푼 쪽을 표면색으로 칠하면
+   어두운 테마에서 배경에 묻히므로 두 테마 다 읽히는 중간 톤을 쓴다. 안 잰 쪽은
+   높이만 알고 결과는 모르니 속을 비운다. */
+.fig rect.miss { fill: var(--muted); }
+.fig rect.unrun { fill: none; stroke: var(--line-strong); stroke-width: 1; }
