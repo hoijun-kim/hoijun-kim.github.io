@@ -227,10 +227,11 @@ Depth was not touched either. Every recurrent model here is one layer and the
 transformer is three. The budget was matched on width alone, so what happens when
 recurrence gets a second layer is unknown.
 
-And training time was not measured. One GRU run took more than twice as long as
-the transformer, which means the per-step cost differs, which means whether
-comparing at equal step counts is fair at all is itself a question. Measured
-later.
+And training time was not measured. This first said one GRU run took more than
+twice as long as the transformer - a number taken by timing five configurations
+one after another, which makes it unusable. Part nine measures it round-robin and
+gets `1.21` times per step, and answers whether comparing at equal step counts was
+fair: it was, and it leaned the transformer's way.
 
 ## So
 
