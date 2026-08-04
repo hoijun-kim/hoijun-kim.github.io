@@ -29,6 +29,23 @@ export const profile = {
 
 export const work: Project[] = [
   {
+    name: "gifly",
+    version: "v0.1.0",
+    summary:
+      "Drop in a video or a set of images. Trim or reorder, pick a size, aspect, speed, loop and dither, then export a GIF, WebP or APNG - with a live size estimate and a target-size fit, straight to your clipboard.",
+    highlight: ["GIF, WebP or APNG", "clipboard"],
+    links: {
+      download: "https://github.com/hoijun-kim/gifly/releases",
+      site: "https://hoijun-kim.github.io/gifly/",
+      source: "https://github.com/hoijun-kim/gifly",
+    },
+    stack: ["Go", "Svelte", "Wails", "FFmpeg"],
+    runs: { label: "runs on", items: ["Windows"] },
+    replaces: ["ScreenToGif", "ezgif"],
+    license: "PolyForm NC 1.0.0",
+    colour: { light: "#7C3AED", dark: "#8B5CF6" },
+  },
+  {
     name: "flip",
     version: "v0.1.0",
     summary:
